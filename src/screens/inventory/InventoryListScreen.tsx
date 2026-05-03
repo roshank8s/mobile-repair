@@ -1,14 +1,15 @@
 import React, {useMemo, useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Input} from '../../components/Input';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {EmptyState} from '../../components/EmptyState';
 import {Fab} from '../../components/Fab';
+import {FilterChips, type FilterChip} from '../../components/FilterChips';
 import {SearchIcon} from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
@@ -41,7 +42,6 @@ export const InventoryListScreen: React.FC = () => {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
 
-  // Top brands by part count
   const topBrands = useMemo(() => {
     const counts: Record<string, number> = {};
     parts.forEach(p => {
@@ -64,7 +64,6 @@ export const InventoryListScreen: React.FC = () => {
         if (filter === 'all') return true;
         if (filter === 'low') return p.stock <= p.lowStockAt;
         if (filter === 'high') return p.stock > p.lowStockAt * 2;
-        // brand filter
         return (p.brand ?? 'Generic') === filter;
       })
       .filter(p => {
@@ -77,7 +76,7 @@ export const InventoryListScreen: React.FC = () => {
       });
   }, [parts, query, filter]);
 
-  const filters: {key: FilterKey; label: string; count?: number}[] = [
+  const chips: FilterChip[] = [
     {key: 'all', label: 'All', count: parts.length},
     {key: 'low', label: 'Low stock', count: lowCount},
     {key: 'high', label: 'High stock'},
@@ -85,7 +84,7 @@ export const InventoryListScreen: React.FC = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScreenHeader
         title="Inventory"
         subtitle={
@@ -104,33 +103,32 @@ export const InventoryListScreen: React.FC = () => {
         />
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersRow}>
-        {filters.map(f => (
-          <Chip
-            key={f.key}
-            active={filter === f.key}
-            label={f.label}
-            count={f.count}
-            onPress={() => setFilter(f.key)}
-          />
-        ))}
-      </ScrollView>
+      <FilterChips
+        chips={chips}
+        activeKey={filter}
+        onChange={k => setFilter(k as FilterKey)}
+      />
 
       {filtered.length === 0 ? (
         <View style={styles.flex}>
           <EmptyState
             kind="parts"
-            title={query || filter !== 'all' ? 'No parts match' : 'No parts in inventory'}
+            title={
+              query || filter !== 'all'
+                ? 'No parts match'
+                : 'No parts in inventory'
+            }
             message={
               query || filter !== 'all'
                 ? 'Try a different keyword or filter.'
                 : 'Tap "Add Part" to add your first item.'
             }
-            actionLabel={query || filter !== 'all' ? undefined : 'Add part'}
-            onAction={query || filter !== 'all' ? undefined : () => nav.navigate('PartEdit')}
+            actionLabel={
+              query || filter !== 'all' ? undefined : 'Add part'
+            }
+            onAction={
+              query || filter !== 'all' ? undefined : () => nav.navigate('PartEdit')
+            }
           />
         </View>
       ) : (
@@ -151,32 +149,9 @@ export const InventoryListScreen: React.FC = () => {
       )}
 
       <Fab label="Add Part" onPress={() => nav.navigate('PartEdit')} />
-    </SafeAreaView>
+    </Screen>
   );
 };
-
-const Chip: React.FC<{
-  active: boolean;
-  label: string;
-  count?: number;
-  onPress: () => void;
-}> = ({active, label, count, onPress}) => (
-  <AnimatedPressable
-    onPress={onPress}
-    style={[styles.chip, active && styles.chipActive]}
-    scaleTo={0.95}>
-    <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>
-      {label}
-    </Text>
-    {count !== undefined && count > 0 ? (
-      <View style={[styles.chipBadge, active && styles.chipBadgeActive]}>
-        <Text style={[styles.chipBadgeText, active && styles.chipBadgeTextActive]}>
-          {count}
-        </Text>
-      </View>
-    ) : null}
-  </AnimatedPressable>
-);
 
 const PartRow: React.FC<{part: Part; onPress: () => void; delay: number}> = ({
   part,
@@ -227,50 +202,8 @@ const PartRow: React.FC<{part: Part; onPress: () => void; delay: number}> = ({
 };
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   searchBox: {paddingHorizontal: spacing.lg, marginBottom: spacing.sm},
-  filtersRow: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minHeight: 36,
-  },
-  chipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
-  chipLabel: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
-    color: colors.textMuted,
-  },
-  chipLabelActive: {color: colors.textOnPrimary},
-  chipBadge: {
-    minWidth: 20,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 10,
-    backgroundColor: colors.cardMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chipBadgeActive: {backgroundColor: 'rgba(255,255,255,0.18)'},
-  chipBadgeText: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: colors.textMuted,
-    fontVariant: ['tabular-nums'],
-  },
-  chipBadgeTextActive: {color: colors.textOnPrimary},
   list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
   row: {
     flexDirection: 'row',

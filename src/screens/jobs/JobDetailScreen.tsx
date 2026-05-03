@@ -7,7 +7,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   useNavigation,
   useRoute,
@@ -15,6 +14,7 @@ import {
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown, FadeIn, ZoomIn} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Card} from '../../components/Card';
 import {Button} from '../../components/Button';
@@ -86,9 +86,9 @@ export const JobDetailScreen: React.FC = () => {
 
   if (!job) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <Screen>
         <ScreenHeader title="Job not found" onBack={() => nav.goBack()} />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -131,7 +131,7 @@ export const JobDetailScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScreenHeader
         title={job.ticketNo}
         subtitle={`${job.device.brand} ${job.device.model}`}
@@ -350,7 +350,7 @@ export const JobDetailScreen: React.FC = () => {
         visible={statusOverlay === 'ready'}
         message="Ready for pickup!"
       />
-    </SafeAreaView>
+    </Screen>
   );
 };
 
@@ -381,7 +381,7 @@ const PartPickerModal: React.FC<{
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <Screen edges={['top', 'bottom']}>
         <ScreenHeader title="Pick a part" onBack={onClose} />
         <View style={styles.searchBox}>
           <Input
@@ -423,7 +423,7 @@ const PartPickerModal: React.FC<{
             </AnimatedPressable>
           ))}
         </ScrollView>
-      </SafeAreaView>
+      </Screen>
     </Modal>
   );
 };
@@ -506,7 +506,6 @@ const SuccessOverlay: React.FC<{visible: boolean; message: string}> = ({
 
 // styles
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: 120},
   statusBox: {

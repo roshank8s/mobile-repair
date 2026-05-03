@@ -7,10 +7,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeIn} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Input} from '../../components/Input';
 import {Button} from '../../components/Button';
@@ -84,7 +84,7 @@ export const JobCreateScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -247,7 +247,7 @@ export const JobCreateScreen: React.FC = () => {
           />
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
@@ -256,7 +256,6 @@ const SectionTitle: React.FC<{children: React.ReactNode}> = ({children}) => (
 );
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
   gap: {gap: spacing.md},

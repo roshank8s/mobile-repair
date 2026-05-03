@@ -1,6 +1,5 @@
 import React, {useMemo} from 'react';
 import {ScrollView, Share, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   useNavigation,
   useRoute,
@@ -8,6 +7,7 @@ import {
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Card} from '../../components/Card';
 import {Button} from '../../components/Button';
@@ -44,9 +44,9 @@ export const InvoiceDetailScreen: React.FC = () => {
 
   if (!invoice || !job) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <Screen>
         <ScreenHeader title="Not found" onBack={() => nav.goBack()} />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -85,7 +85,7 @@ export const InvoiceDetailScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScreenHeader
         title={invoice.invoiceNo}
         subtitle={`Generated ${formatDate(invoice.createdAt)}`}
@@ -222,7 +222,7 @@ export const InvoiceDetailScreen: React.FC = () => {
         </Card>
         <View style={{height: spacing.huge}} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
@@ -242,7 +242,6 @@ const SummaryRow: React.FC<{label: string; value: number; highlight?: boolean}> 
 );
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
   docCard: {

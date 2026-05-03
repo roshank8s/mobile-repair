@@ -1,6 +1,5 @@
 import React, {useMemo} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   useNavigation,
   useRoute,
@@ -8,6 +7,7 @@ import {
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Card} from '../../components/Card';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
@@ -41,14 +41,14 @@ export const CustomerDetailScreen: React.FC = () => {
 
   if (!customer) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <Screen>
         <ScreenHeader title="Not found" onBack={() => nav.goBack()} />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScreenHeader title={customer.name} onBack={() => nav.goBack()} />
 
       <ScrollView
@@ -145,12 +145,11 @@ export const CustomerDetailScreen: React.FC = () => {
         )}
         <View style={{height: spacing.huge}} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
   label: {

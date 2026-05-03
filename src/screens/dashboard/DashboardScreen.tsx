@@ -1,9 +1,9 @@
 import React, {useMemo} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {StatCard} from '../../components/StatCard';
 import {Card} from '../../components/Card';
@@ -46,7 +46,7 @@ export const DashboardScreen: React.FC = () => {
   }, [jobs]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
@@ -156,12 +156,11 @@ export const DashboardScreen: React.FC = () => {
       </ScrollView>
 
       <Fab onPress={() => nav.navigate('JobCreate')} />
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {paddingBottom: spacing.huge},
   statsRow: {

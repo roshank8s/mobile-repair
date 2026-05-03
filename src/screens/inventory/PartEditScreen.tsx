@@ -8,13 +8,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   useNavigation,
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Card} from '../../components/Card';
 import {Input} from '../../components/Input';
@@ -89,7 +89,7 @@ export const PartEditScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -181,12 +181,11 @@ export const PartEditScreen: React.FC = () => {
           />
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
   gap: {gap: spacing.md},

@@ -1,13 +1,14 @@
 import React, {useMemo, useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Input} from '../../components/Input';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {EmptyState} from '../../components/EmptyState';
+import {FilterChips, type FilterChip} from '../../components/FilterChips';
 import {PhoneIcon, SearchIcon, WhatsAppIcon} from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
@@ -20,8 +21,8 @@ import type {RootStackParamList} from '../../app/navigation/types';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Tab = 'all' | 'active' | 'frequent' | 'new';
 
-const FREQUENT_THRESHOLD = 3; // jobs
-const HIGH_VALUE_THRESHOLD = 10000; // ₹
+const FREQUENT_THRESHOLD = 3;
+const HIGH_VALUE_THRESHOLD = 10000;
 const NEW_DAYS = 30;
 const ACTIVE_STATUSES = new Set([
   'received',
@@ -69,9 +70,10 @@ export const CustomersListScreen: React.FC = () => {
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('all');
 
-  const decorated = useMemo(() => {
-    return customers.map(c => ({customer: c, stats: computeStats(c, jobs)}));
-  }, [customers, jobs]);
+  const decorated = useMemo(
+    () => customers.map(c => ({customer: c, stats: computeStats(c, jobs)})),
+    [customers, jobs],
+  );
 
   const counts = useMemo(() => {
     const newCutoff = Date.now() - NEW_DAYS * 24 * 3600 * 1000;
@@ -80,8 +82,9 @@ export const CustomersListScreen: React.FC = () => {
       active: decorated.filter(d => d.stats.activeJobCount > 0).length,
       frequent: decorated.filter(d => d.stats.jobCount >= FREQUENT_THRESHOLD)
         .length,
-      new: decorated.filter(d => new Date(d.customer.createdAt).getTime() > newCutoff)
-        .length,
+      new: decorated.filter(
+        d => new Date(d.customer.createdAt).getTime() > newCutoff,
+      ).length,
     };
   }, [decorated]);
 
@@ -106,7 +109,6 @@ export const CustomersListScreen: React.FC = () => {
         );
       })
       .sort((a, b) => {
-        // Sort: active jobs first, then most recent visit
         if (a.stats.activeJobCount !== b.stats.activeJobCount) {
           return b.stats.activeJobCount - a.stats.activeJobCount;
         }
@@ -116,7 +118,7 @@ export const CustomersListScreen: React.FC = () => {
       });
   }, [decorated, query, tab]);
 
-  const tabs: {key: Tab; label: string; count: number}[] = [
+  const chips: FilterChip[] = [
     {key: 'all', label: 'All', count: counts.all},
     {key: 'active', label: 'Active', count: counts.active},
     {key: 'frequent', label: 'Frequent', count: counts.frequent},
@@ -124,7 +126,7 @@ export const CustomersListScreen: React.FC = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScreenHeader title="Customers" subtitle={`${customers.length} total`} />
 
       <View style={styles.searchBox}>
@@ -136,20 +138,11 @@ export const CustomersListScreen: React.FC = () => {
         />
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabsRow}>
-        {tabs.map(t => (
-          <Chip
-            key={t.key}
-            active={tab === t.key}
-            label={t.label}
-            count={t.count}
-            onPress={() => setTab(t.key)}
-          />
-        ))}
-      </ScrollView>
+      <FilterChips
+        chips={chips}
+        activeKey={tab}
+        onChange={k => setTab(k as Tab)}
+      />
 
       {filtered.length === 0 ? (
         <View style={styles.flex}>
@@ -182,32 +175,9 @@ export const CustomersListScreen: React.FC = () => {
           <View style={{height: spacing.huge}} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 };
-
-const Chip: React.FC<{
-  active: boolean;
-  label: string;
-  count: number;
-  onPress: () => void;
-}> = ({active, label, count, onPress}) => (
-  <AnimatedPressable
-    onPress={onPress}
-    style={[styles.chip, active && styles.chipActive]}
-    scaleTo={0.95}>
-    <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>
-      {label}
-    </Text>
-    {count > 0 ? (
-      <View style={[styles.chipBadge, active && styles.chipBadgeActive]}>
-        <Text style={[styles.chipBadgeText, active && styles.chipBadgeTextActive]}>
-          {count}
-        </Text>
-      </View>
-    ) : null}
-  </AnimatedPressable>
-);
 
 const CustomerCard: React.FC<{
   customer: Customer;
@@ -283,50 +253,8 @@ const CustomerCard: React.FC<{
 };
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   searchBox: {paddingHorizontal: spacing.lg, marginBottom: spacing.sm},
-  tabsRow: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minHeight: 36,
-  },
-  chipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
-  chipLabel: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
-    color: colors.textMuted,
-  },
-  chipLabelActive: {color: colors.textOnPrimary},
-  chipBadge: {
-    minWidth: 20,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 10,
-    backgroundColor: colors.cardMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chipBadgeActive: {backgroundColor: 'rgba(255,255,255,0.18)'},
-  chipBadgeText: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: colors.textMuted,
-    fontVariant: ['tabular-nums'],
-  },
-  chipBadgeTextActive: {color: colors.textOnPrimary},
   list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
   row: {
     flexDirection: 'row',

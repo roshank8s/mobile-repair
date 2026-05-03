@@ -7,8 +7,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import Animated, {FadeIn, FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {Button} from '../../components/Button';
 import {Input} from '../../components/Input';
 import {WrenchIcon} from '../../components/icons';
@@ -67,7 +67,7 @@ export const OnboardingScreen: React.FC = () => {
   const back = () => setStep(s => Math.max(0, s - 1));
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -184,7 +184,7 @@ export const OnboardingScreen: React.FC = () => {
           />
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
@@ -199,7 +199,6 @@ const Feature: React.FC<{title: string; message: string}> = ({title, message}) =
 );
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {padding: spacing.xl, paddingBottom: spacing.xxxl},
   dots: {flexDirection: 'row', gap: 6, alignSelf: 'center', marginBottom: spacing.xxl},

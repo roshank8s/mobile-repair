@@ -1,15 +1,16 @@
 import React, {useMemo, useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {StatusPill} from '../../components/StatusPill';
 import {EmptyState} from '../../components/EmptyState';
 import {Input} from '../../components/Input';
 import {Fab} from '../../components/Fab';
+import {FilterChips, type FilterChip} from '../../components/FilterChips';
 import {SearchIcon} from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
@@ -21,29 +22,23 @@ import type {Job, JobStatus} from '../../data/types';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Filter = 'all' | 'today' | 'in_progress' | 'ready' | 'overdue';
 
-const FILTERS: {key: Filter; label: string}[] = [
-  {key: 'all', label: 'All'},
-  {key: 'today', label: 'Today'},
-  {key: 'in_progress', label: 'In progress'},
-  {key: 'ready', label: 'Ready'},
-  {key: 'overdue', label: 'Overdue'},
-];
-
 const matchesFilter = (j: Job, f: Filter): boolean => {
   if (f === 'all') return j.status !== 'delivered' && j.status !== 'cancelled';
   if (f === 'today') return isToday(j.receivedAt);
-  if (f === 'in_progress')
+  if (f === 'in_progress') {
     return (
       j.status === 'in_progress' || j.status === 'approved' || j.status === 'quoted'
     );
+  }
   if (f === 'ready') return j.status === 'ready';
-  if (f === 'overdue')
+  if (f === 'overdue') {
     return (
       !!j.promisedAt &&
       new Date(j.promisedAt).getTime() < Date.now() &&
       j.status !== 'delivered' &&
       j.status !== 'ready'
     );
+  }
   return true;
 };
 
@@ -53,6 +48,15 @@ export const JobsListScreen: React.FC = () => {
   const customers = useStoreState(s => s.customers);
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
+
+  const counts = useMemo(() => {
+    const all = jobs.filter(j => matchesFilter(j, 'all')).length;
+    const today = jobs.filter(j => matchesFilter(j, 'today')).length;
+    const inProgress = jobs.filter(j => matchesFilter(j, 'in_progress')).length;
+    const ready = jobs.filter(j => matchesFilter(j, 'ready')).length;
+    const overdue = jobs.filter(j => matchesFilter(j, 'overdue')).length;
+    return {all, today, in_progress: inProgress, ready, overdue};
+  }, [jobs]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -72,12 +76,17 @@ export const JobsListScreen: React.FC = () => {
       });
   }, [jobs, customers, filter, query]);
 
+  const chips: FilterChip[] = [
+    {key: 'all', label: 'All', count: counts.all},
+    {key: 'today', label: 'Today', count: counts.today},
+    {key: 'in_progress', label: 'In progress', count: counts.in_progress},
+    {key: 'ready', label: 'Ready', count: counts.ready},
+    {key: 'overdue', label: 'Overdue', count: counts.overdue},
+  ];
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader
-        title="Jobs"
-        subtitle={`${jobs.filter(j => j.status !== 'delivered' && j.status !== 'cancelled').length} active`}
-      />
+    <Screen>
+      <ScreenHeader title="Jobs" subtitle={`${counts.all} active`} />
 
       <View style={styles.searchBox}>
         <Input
@@ -88,19 +97,11 @@ export const JobsListScreen: React.FC = () => {
         />
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersRow}>
-        {FILTERS.map(f => (
-          <Chip
-            key={f.key}
-            active={filter === f.key}
-            label={f.label}
-            onPress={() => setFilter(f.key)}
-          />
-        ))}
-      </ScrollView>
+      <FilterChips
+        chips={chips}
+        activeKey={filter}
+        onChange={k => setFilter(k as Filter)}
+      />
 
       {filtered.length === 0 ? (
         <View style={styles.flex}>
@@ -130,29 +131,14 @@ export const JobsListScreen: React.FC = () => {
               delay={i * 40}
             />
           ))}
-          <View style={{height: 96}} />
+          <View style={{height: 110}} />
         </ScrollView>
       )}
 
       <Fab onPress={() => nav.navigate('JobCreate')} />
-    </SafeAreaView>
+    </Screen>
   );
 };
-
-const Chip: React.FC<{active: boolean; label: string; onPress: () => void}> = ({
-  active,
-  label,
-  onPress,
-}) => (
-  <AnimatedPressable
-    onPress={onPress}
-    style={[styles.chip, active && styles.chipActive]}
-    scaleTo={0.95}>
-    <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>
-      {label}
-    </Text>
-  </AnimatedPressable>
-);
 
 const JobRow: React.FC<{
   job: Job;
@@ -165,30 +151,39 @@ const JobRow: React.FC<{
     new Date(job.promisedAt).getTime() < Date.now() &&
     job.status !== 'ready' &&
     job.status !== 'delivered';
+
   return (
     <Animated.View
       entering={FadeInDown.duration(260).delay(delay).springify().damping(18)}>
       <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
         <View style={styles.rowHeader}>
-          <Text style={styles.ticket}>{job.ticketNo}</Text>
+          <View style={styles.flex}>
+            <Text style={styles.ticket}>{job.ticketNo}</Text>
+            <Text style={styles.customer} numberOfLines={1}>
+              {customerName}
+            </Text>
+          </View>
           <StatusPill status={job.status as JobStatus} size="sm" />
         </View>
-        <Text style={styles.customer}>{customerName}</Text>
-        <Text style={styles.device}>
+
+        <Text style={styles.device} numberOfLines={1}>
           {job.device.brand} {job.device.model}
+          {job.issue ? ` · ${job.issue}` : ''}
         </Text>
-        <Text style={styles.issue} numberOfLines={1}>
-          {job.issue}
-        </Text>
+
         <View style={styles.rowFooter}>
-          <Text style={styles.estimate}>
+          <Text style={styles.amount}>
             {formatINR(job.finalAmount ?? job.estimateAmount)}
           </Text>
-          <Text style={[styles.received, isOverdue && styles.overdue]}>
-            {isOverdue
-              ? 'Overdue'
-              : 'Received ' + formatRelative(job.receivedAt)}
-          </Text>
+          {isOverdue ? (
+            <View style={styles.overdueBadge}>
+              <Text style={styles.overdueText}>Overdue</Text>
+            </View>
+          ) : (
+            <Text style={styles.time}>
+              {formatRelative(job.receivedAt)}
+            </Text>
+          )}
         </View>
       </AnimatedPressable>
     </Animated.View>
@@ -196,32 +191,8 @@ const JobRow: React.FC<{
 };
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   searchBox: {paddingHorizontal: spacing.lg, marginBottom: spacing.sm},
-  filtersRow: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipLabel: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
-    color: colors.textMuted,
-  },
-  chipLabelActive: {color: colors.textOnPrimary},
   list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
   row: {
     backgroundColor: colors.card,
@@ -229,16 +200,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radii.lg,
     padding: spacing.md,
-    gap: 4,
+    gap: spacing.xs,
   },
   rowHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+    alignItems: 'flex-start',
+    gap: spacing.sm,
   },
   ticket: {
-    fontSize: fontSize.bodyLg,
+    fontSize: fontSize.body,
     fontWeight: fontWeight.bold,
     color: colors.text,
     fontVariant: ['tabular-nums'],
@@ -247,24 +217,35 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     color: colors.text,
     fontWeight: fontWeight.semibold,
+    marginTop: 2,
   },
   device: {fontSize: fontSize.small, color: colors.textMuted},
-  issue: {fontSize: fontSize.small, color: colors.textMuted},
   rowFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.divider,
   },
-  estimate: {
+  amount: {
     fontSize: fontSize.body,
     fontWeight: fontWeight.bold,
     color: colors.primary,
     fontVariant: ['tabular-nums'],
   },
-  received: {fontSize: fontSize.caption, color: colors.textSubtle},
-  overdue: {color: colors.danger, fontWeight: fontWeight.bold},
+  time: {fontSize: fontSize.caption, color: colors.textSubtle},
+  overdueBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radii.pill,
+    backgroundColor: colors.dangerSoft,
+  },
+  overdueText: {
+    fontSize: fontSize.caption,
+    color: colors.danger,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 0.3,
+  },
 });

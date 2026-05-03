@@ -1,9 +1,9 @@
 import React from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {EmptyState} from '../../components/EmptyState';
@@ -23,7 +23,7 @@ export const InvoicesListScreen: React.FC = () => {
   const jobs = useStoreState(s => s.jobs);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScreenHeader
         title="Invoices"
         subtitle={`${invoices.length} total`}
@@ -77,12 +77,11 @@ export const InvoicesListScreen: React.FC = () => {
           })}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   list: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge, gap: spacing.sm},
   row: {

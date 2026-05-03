@@ -1,9 +1,9 @@
 import React, {useMemo} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, CommonActions} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {MoneyText} from '../../components/MoneyText';
@@ -85,7 +85,7 @@ export const MoreScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <Screen>
       <ScreenHeader title="More" />
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -234,7 +234,7 @@ export const MoreScreen: React.FC = () => {
         <Text style={styles.versionText}>Repair Shop · v1.0</Text>
         <View style={{height: spacing.huge}} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
@@ -298,7 +298,6 @@ const Row: React.FC<{
 );
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
 
   // Profile

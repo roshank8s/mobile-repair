@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Card} from '../../components/Card';
 import {Input} from '../../components/Input';
@@ -74,7 +74,7 @@ export const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']}>
       <ScreenHeader title="Settings" onBack={() => nav.goBack()} />
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -183,7 +183,7 @@ export const SettingsScreen: React.FC = () => {
         />
         <View style={{height: spacing.huge}} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
@@ -192,7 +192,6 @@ const SectionTitle: React.FC<{children: React.ReactNode}> = ({children}) => (
 );
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
   sectionTitle: {
