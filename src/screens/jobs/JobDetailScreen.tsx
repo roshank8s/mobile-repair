@@ -1,10 +1,12 @@
 import React, {useMemo, useState} from 'react';
 import {
   Alert,
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import {
@@ -145,12 +147,20 @@ export const JobDetailScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeIn.duration(220)} style={styles.statusBox}>
-          <StatusPill status={job.status} />
-          <Text style={styles.received}>
-            Received {formatRelative(job.receivedAt)}
-          </Text>
-        </Animated.View>
+        {job.photos.length > 0 ? (
+          <PhotoHero
+            photos={job.photos}
+            status={job.status}
+            ticketNo={job.ticketNo}
+          />
+        ) : (
+          <Animated.View entering={FadeIn.duration(220)} style={styles.statusBox}>
+            <StatusPill status={job.status} />
+            <Text style={styles.received}>
+              Received {formatRelative(job.receivedAt)}
+            </Text>
+          </Animated.View>
+        )}
 
         <SectionTitle>Customer</SectionTitle>
         <Card>
@@ -378,6 +388,45 @@ export const JobDetailScreen: React.FC = () => {
   );
 };
 
+const PhotoHero: React.FC<{
+  photos: string[];
+  status: JobStatus;
+  ticketNo: string;
+}> = ({photos, status, ticketNo}) => {
+  const {width} = useWindowDimensions();
+  const heroHeight = Math.min(280, Math.round(width * 0.62));
+  const itemWidth = Math.min(width, 720) - spacing.lg * 2;
+  return (
+    <View style={[styles.photoHero, {height: heroHeight}]}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={itemWidth}
+        decelerationRate="fast"
+        contentContainerStyle={styles.photoHeroScroll}>
+        {photos.map((uri, i) => (
+          <View
+            key={`hero-${i}`}
+            style={[styles.photoHeroSlide, {width: itemWidth, height: heroHeight}]}>
+            <Image source={{uri}} style={styles.photoHeroImg} />
+          </View>
+        ))}
+      </ScrollView>
+      <View style={styles.photoHeroOverlay} pointerEvents="none">
+        <View style={styles.photoHeroPill}>
+          <StatusPill status={status} size="sm" />
+        </View>
+        <View style={styles.photoHeroCount}>
+          <Text style={styles.photoHeroCountText}>
+            {ticketNo} · {photos.length} photo{photos.length === 1 ? '' : 's'}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const SectionTitle: React.FC<{children: React.ReactNode}> = ({children}) => (
   <Text style={styles.sectionTitle}>{children}</Text>
 );
@@ -537,6 +586,37 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
+  },
+  photoHero: {
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  photoHeroScroll: {paddingHorizontal: 0},
+  photoHeroSlide: {
+    backgroundColor: colors.cardMuted,
+    overflow: 'hidden',
+    borderRadius: radii.xl,
+    marginRight: 0,
+  },
+  photoHeroImg: {width: '100%', height: '100%'},
+  photoHeroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    padding: spacing.md,
+    justifyContent: 'space-between',
+  },
+  photoHeroPill: {alignSelf: 'flex-start'},
+  photoHeroCount: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radii.pill,
+  },
+  photoHeroCountText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
+    fontVariant: ['tabular-nums'],
   },
   received: {fontSize: fontSize.small, color: colors.textSubtle},
   sectionTitle: {

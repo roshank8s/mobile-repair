@@ -6,6 +6,7 @@ import Animated, {FadeInDown} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
+import {Avatar} from '../../components/Avatar';
 import {StatusPill} from '../../components/StatusPill';
 import {EmptyState} from '../../components/EmptyState';
 import {Input} from '../../components/Input';
@@ -120,17 +121,20 @@ export const JobsListScreen: React.FC = () => {
           style={styles.flex}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}>
-          {filtered.map((j, i) => (
-            <JobRow
-              key={j.id}
-              job={j}
-              customerName={
-                customers.find(c => c.id === j.customerId)?.name ?? 'Walk-in'
-              }
-              onPress={() => nav.navigate('JobDetail', {jobId: j.id})}
-              delay={i * 40}
-            />
-          ))}
+          {filtered.map((j, i) => {
+            const cust = customers.find(c => c.id === j.customerId);
+            return (
+              <JobRow
+                key={j.id}
+                job={j}
+                customerName={cust?.name ?? 'Walk-in'}
+                customerAvatar={cust?.avatarUri}
+                photoThumb={j.photos[0]}
+                onPress={() => nav.navigate('JobDetail', {jobId: j.id})}
+                delay={i * 40}
+              />
+            );
+          })}
           <View style={{height: 110}} />
         </ScrollView>
       )}
@@ -140,50 +144,79 @@ export const JobsListScreen: React.FC = () => {
   );
 };
 
+const STATUS_ACCENT: Record<string, string> = {
+  received: colors.info,
+  diagnosed: colors.info,
+  quoted: colors.warning,
+  approved: colors.warning,
+  in_progress: colors.warning,
+  ready: colors.success,
+  delivered: colors.primary,
+  cancelled: colors.danger,
+};
+
 const JobRow: React.FC<{
   job: Job;
   customerName: string;
+  customerAvatar?: string;
+  photoThumb?: string;
   onPress: () => void;
   delay: number;
-}> = ({job, customerName, onPress, delay}) => {
+}> = ({job, customerName, customerAvatar, photoThumb, onPress, delay}) => {
   const isOverdue =
     !!job.promisedAt &&
     new Date(job.promisedAt).getTime() < Date.now() &&
     job.status !== 'ready' &&
     job.status !== 'delivered';
+  const accent = STATUS_ACCENT[job.status] ?? colors.primary;
 
   return (
     <Animated.View
       entering={FadeInDown.duration(260).delay(delay).springify().damping(18)}>
       <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
-        <View style={styles.rowHeader}>
-          <View style={styles.flex}>
-            <Text style={styles.ticket}>{job.ticketNo}</Text>
-            <Text style={styles.customer} numberOfLines={1}>
-              {customerName}
-            </Text>
-          </View>
-          <StatusPill status={job.status as JobStatus} size="sm" />
-        </View>
-
-        <Text style={styles.device} numberOfLines={1}>
-          {job.device.brand} {job.device.model}
-          {job.issue ? ` · ${job.issue}` : ''}
-        </Text>
-
-        <View style={styles.rowFooter}>
-          <Text style={styles.amount}>
-            {formatINR(job.finalAmount ?? job.estimateAmount)}
-          </Text>
-          {isOverdue ? (
-            <View style={styles.overdueBadge}>
-              <Text style={styles.overdueText}>Overdue</Text>
+        <View style={[styles.rowAccent, {backgroundColor: accent}]} />
+        <View style={styles.rowBody}>
+          <View style={styles.rowTop}>
+            {photoThumb ? (
+              <Avatar uri={photoThumb} size={40} />
+            ) : (
+              <Avatar
+                uri={customerAvatar}
+                fallback={customerName
+                  .split(' ')
+                  .map(p => p[0] ?? '')
+                  .join('')}
+                size={40}
+              />
+            )}
+            <View style={styles.flex}>
+              <Text style={styles.ticket}>{job.ticketNo}</Text>
+              <Text style={styles.customer} numberOfLines={1}>
+                {customerName}
+              </Text>
             </View>
-          ) : (
-            <Text style={styles.time}>
-              {formatRelative(job.receivedAt)}
+            <StatusPill status={job.status as JobStatus} size="sm" />
+          </View>
+
+          <Text style={styles.device} numberOfLines={1}>
+            {job.device.brand} {job.device.model}
+            {job.issue ? ` · ${job.issue}` : ''}
+          </Text>
+
+          <View style={styles.rowFooter}>
+            <Text style={styles.amount}>
+              {formatINR(job.finalAmount ?? job.estimateAmount)}
             </Text>
-          )}
+            {isOverdue ? (
+              <View style={styles.overdueBadge}>
+                <Text style={styles.overdueText}>Overdue</Text>
+              </View>
+            ) : (
+              <Text style={styles.time}>
+                {formatRelative(job.receivedAt)}
+              </Text>
+            )}
+          </View>
         </View>
       </AnimatedPressable>
     </Animated.View>
@@ -195,17 +228,26 @@ const styles = StyleSheet.create({
   searchBox: {paddingHorizontal: spacing.lg, marginBottom: spacing.sm},
   list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
   row: {
+    flexDirection: 'row',
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radii.lg,
+    overflow: 'hidden',
+  },
+  rowAccent: {
+    width: 4,
+    alignSelf: 'stretch',
+  },
+  rowBody: {
+    flex: 1,
     padding: spacing.md,
     gap: spacing.xs,
   },
-  rowHeader: {
+  rowTop: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.md,
   },
   ticket: {
     fontSize: fontSize.body,

@@ -7,6 +7,7 @@ import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {Avatar} from '../../components/Avatar';
+import {Hero} from '../../components/Hero';
 import {MoneyText} from '../../components/MoneyText';
 import {
   BarChartIcon,
@@ -93,7 +94,7 @@ export const MoreScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}>
         {/* Profile card */}
         <Animated.View entering={FadeInDown.duration(300).springify().damping(18)}>
-          <View style={styles.profileCard}>
+          <Hero style={styles.profileCard}>
             <View style={styles.profileTop}>
               <Avatar
                 uri={shop.logoUri ?? shop.ownerAvatarUri}
@@ -130,7 +131,7 @@ export const MoreScreen: React.FC = () => {
                 />
               </View>
             </View>
-          </View>
+          </Hero>
         </Animated.View>
 
         {/* Quick actions */}
@@ -307,11 +308,8 @@ const styles = StyleSheet.create({
 
   // Profile
   profileCard: {
-    backgroundColor: colors.primary,
-    borderRadius: radii.xl,
     padding: spacing.xl,
     marginBottom: spacing.lg,
-    ...shadows.raised,
   },
   profileTop: {
     flexDirection: 'row',
