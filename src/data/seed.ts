@@ -210,6 +210,7 @@ export const seedData = (): AppState => {
           unitPrice: 9500,
         },
       ],
+      photos: [],
       statusLog: [
         {status: 'received' as JobStatus, at: hoursAgo(20)},
         {status: 'diagnosed' as JobStatus, at: hoursAgo(18)},
@@ -240,6 +241,7 @@ export const seedData = (): AppState => {
       finalAmount: 1800,
       receivedAt: daysAgo(2),
       parts: [],
+      photos: [],
       statusLog: [
         {status: 'received' as JobStatus, at: daysAgo(2)},
         {status: 'diagnosed' as JobStatus, at: daysAgo(2)},
@@ -259,6 +261,7 @@ export const seedData = (): AppState => {
       estimateAmount: 0,
       receivedAt: hoursAgo(3),
       parts: [],
+      photos: [],
       statusLog: [{status: 'received' as JobStatus, at: hoursAgo(3)}],
       createdAt: hoursAgo(3),
       updatedAt: hoursAgo(3),
@@ -283,6 +286,7 @@ export const seedData = (): AppState => {
           unitPrice: 700,
         },
       ],
+      photos: [],
       statusLog: [
         {status: 'received' as JobStatus, at: daysAgo(5)},
         {status: 'diagnosed' as JobStatus, at: daysAgo(5)},
@@ -309,6 +313,7 @@ export const seedData = (): AppState => {
       estimateAmount: 3500,
       receivedAt: hoursAgo(6),
       parts: [],
+      photos: [],
       statusLog: [
         {status: 'received' as JobStatus, at: hoursAgo(6)},
         {status: 'diagnosed' as JobStatus, at: hoursAgo(5)},
@@ -331,6 +336,7 @@ export const seedData = (): AppState => {
       estimateAmount: 1400,
       receivedAt: hoursAgo(28),
       parts: [],
+      photos: [],
       statusLog: [
         {status: 'received' as JobStatus, at: hoursAgo(28)},
         {status: 'diagnosed' as JobStatus, at: hoursAgo(26)},
@@ -359,6 +365,7 @@ export const seedData = (): AppState => {
           unitPrice: 500,
         },
       ],
+      photos: [],
       statusLog: [
         {status: 'received' as JobStatus, at: daysAgo(1)},
         {status: 'in_progress' as JobStatus, at: hoursAgo(20)},
@@ -377,6 +384,7 @@ export const seedData = (): AppState => {
       estimateAmount: 0,
       receivedAt: hoursAgo(1),
       parts: [],
+      photos: [],
       statusLog: [{status: 'received' as JobStatus, at: hoursAgo(1)}],
       createdAt: hoursAgo(1),
       updatedAt: hoursAgo(1),

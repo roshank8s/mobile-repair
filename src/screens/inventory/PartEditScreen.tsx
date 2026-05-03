@@ -19,6 +19,7 @@ import {ScreenHeader} from '../../components/ScreenHeader';
 import {Card} from '../../components/Card';
 import {Input} from '../../components/Input';
 import {Button} from '../../components/Button';
+import {PhotoPicker} from '../../components/PhotoPicker';
 import {colors, fontWeight, spacing} from '../../theme/tokens';
 import {deletePart, upsertPart, useStoreState} from '../../data/store';
 import {useToast} from '../../components/Toast';
@@ -52,6 +53,9 @@ export const PartEditScreen: React.FC = () => {
   const [lowStockAt, setLowStockAt] = useState(
     existing ? String(existing.lowStockAt) : '3',
   );
+  const [imageUri, setImageUri] = useState<string | undefined>(
+    existing?.imageUri,
+  );
 
   const canSave = name.trim() && Number(sellPrice) > 0;
 
@@ -66,6 +70,7 @@ export const PartEditScreen: React.FC = () => {
       sellPrice: Number(sellPrice),
       stock: Number(stock) || 0,
       lowStockAt: Number(lowStockAt) || 0,
+      imageUri,
     });
     hapticSuccess();
     toast.show(existing ? 'Part updated' : 'Part added');
@@ -103,6 +108,16 @@ export const PartEditScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}>
           <Card>
             <View style={styles.gap}>
+              <View style={styles.imageRow}>
+                <PhotoPicker
+                  uri={imageUri}
+                  fallback={name.slice(0, 2) || 'P'}
+                  size={88}
+                  shape="rounded"
+                  label="Part image"
+                  onChange={u => setImageUri(u ?? undefined)}
+                />
+              </View>
               <Input
                 label="Part name"
                 value={name}
@@ -189,6 +204,7 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
   gap: {gap: spacing.md},
+  imageRow: {alignItems: 'center', paddingVertical: spacing.sm},
   row: {flexDirection: 'row', gap: spacing.md},
   prefix: {color: colors.textMuted, fontWeight: fontWeight.semibold},
   footer: {

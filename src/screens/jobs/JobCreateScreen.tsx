@@ -16,6 +16,7 @@ import {Input} from '../../components/Input';
 import {Button} from '../../components/Button';
 import {Card} from '../../components/Card';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
+import {PhotoGallery} from '../../components/PhotoGallery';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {createJob, upsertCustomer, useStoreState} from '../../data/store';
 import {useToast} from '../../components/Toast';
@@ -41,6 +42,7 @@ export const JobCreateScreen: React.FC = () => {
   const [issue, setIssue] = useState('');
   const [estimate, setEstimate] = useState('');
   const [techId, setTechId] = useState<string | undefined>();
+  const [photos, setPhotos] = useState<string[]>([]);
 
   const matchingCustomer = useMemo(
     () => customers.find(c => c.phone === phone.trim()),
@@ -77,6 +79,7 @@ export const JobCreateScreen: React.FC = () => {
       issue: issue.trim(),
       estimateAmount: Number(estimate) || 0,
       technicianId: techId,
+      photos,
     });
     hapticSuccess();
     toast.show(`Ticket ${job.ticketNo} created`);
@@ -168,6 +171,19 @@ export const JobCreateScreen: React.FC = () => {
                   placeholder="Charger, case, SIM tray..."
                 />
               </View>
+            </Card>
+
+            <SectionTitle>Device condition photos</SectionTitle>
+            <Card>
+              <PhotoGallery
+                photos={photos}
+                onAdd={uri => setPhotos(p => [...p, uri])}
+                onRemove={index =>
+                  setPhotos(p => p.filter((_, i) => i !== index))
+                }
+                emptyHint="Snap any cracks, scratches, water damage or missing parts."
+                max={6}
+              />
             </Card>
 
             <SectionTitle>Issue</SectionTitle>

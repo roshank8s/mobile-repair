@@ -6,6 +6,7 @@ import Animated, {FadeInDown} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
+import {Avatar} from '../../components/Avatar';
 import {MoneyText} from '../../components/MoneyText';
 import {
   BarChartIcon,
@@ -94,9 +95,13 @@ export const MoreScreen: React.FC = () => {
         <Animated.View entering={FadeInDown.duration(300).springify().damping(18)}>
           <View style={styles.profileCard}>
             <View style={styles.profileTop}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials(shop.name)}</Text>
-              </View>
+              <Avatar
+                uri={shop.logoUri ?? shop.ownerAvatarUri}
+                fallback={initials(shop.name)}
+                size={56}
+                background={colors.accent}
+                textColor={colors.textOnAccent}
+              />
               <View style={styles.profileInfo}>
                 <Text style={styles.shopName} numberOfLines={1}>
                   {shop.name || 'Repair Shop'}

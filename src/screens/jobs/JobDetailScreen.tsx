@@ -21,6 +21,8 @@ import {Button} from '../../components/Button';
 import {Input} from '../../components/Input';
 import {StatusPill} from '../../components/StatusPill';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
+import {Avatar} from '../../components/Avatar';
+import {PhotoGallery} from '../../components/PhotoGallery';
 import {
   CalendarIcon,
   CheckIcon,
@@ -30,9 +32,11 @@ import {
 } from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, shadows, spacing} from '../../theme/tokens';
 import {
+  addJobPhoto,
   addPartToJob,
   createInvoice,
   recordPayment,
+  removeJobPhoto,
   removePartFromJob,
   setJobFinalAmount,
   transitionJob,
@@ -151,6 +155,15 @@ export const JobDetailScreen: React.FC = () => {
         <SectionTitle>Customer</SectionTitle>
         <Card>
           <View style={styles.row}>
+            <Avatar
+              uri={customer?.avatarUri}
+              fallback={(customer?.name ?? 'W')
+                .split(' ')
+                .map(p => p[0] ?? '')
+                .join('')}
+              size={44}
+              style={{marginRight: 12}}
+            />
             <View style={styles.flex}>
               <Text style={styles.cardTitle}>{customer?.name ?? 'Walk-in'}</Text>
               <Text style={styles.cardSub}>+91 {customer?.phone}</Text>
@@ -192,6 +205,17 @@ export const JobDetailScreen: React.FC = () => {
           {technician ? (
             <Text style={styles.metaText}>Technician: {technician.name}</Text>
           ) : null}
+        </Card>
+
+        <SectionTitle>Device condition photos</SectionTitle>
+        <Card>
+          <PhotoGallery
+            photos={job.photos ?? []}
+            onAdd={uri => addJobPhoto(job.id, uri)}
+            onRemove={i => removeJobPhoto(job.id, i)}
+            emptyHint="No photos yet — tap Camera to capture device condition."
+            max={6}
+          />
         </Card>
 
         <SectionTitle>Status timeline</SectionTitle>

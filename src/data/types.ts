@@ -39,6 +39,10 @@ export type Shop = {
   address?: string;
   gstRatePct: number; // default 18
   onboarded: boolean;
+  /** Shop logo / brand mark, shown on the More tab and on invoices. */
+  logoUri?: string;
+  /** Owner's profile photo, shown on the More tab. */
+  ownerAvatarUri?: string;
 };
 
 export type Technician = {
@@ -46,6 +50,7 @@ export type Technician = {
   name: string;
   phone?: string;
   active: boolean;
+  avatarUri?: string;
 };
 
 export type Customer = {
@@ -54,6 +59,7 @@ export type Customer = {
   phone: string;
   email?: string;
   address?: string;
+  avatarUri?: string;
   createdAt: string;
 };
 
@@ -94,6 +100,8 @@ export type Job = {
   deliveredAt?: string;
   parts: JobPart[];
   statusLog: StatusLogEntry[];
+  /** Photos of the device condition at intake (and any during repair). */
+  photos: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -107,6 +115,7 @@ export type Part = {
   sellPrice: number;
   stock: number;
   lowStockAt: number;
+  imageUri?: string;
   createdAt: string;
 };
 

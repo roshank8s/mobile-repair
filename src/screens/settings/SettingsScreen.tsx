@@ -8,13 +8,17 @@ import {Card} from '../../components/Card';
 import {Input} from '../../components/Input';
 import {Button} from '../../components/Button';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
-import {TrashIcon, PlusIcon} from '../../components/icons';
+import {Avatar} from '../../components/Avatar';
+import {PhotoPicker} from '../../components/PhotoPicker';
+import {TrashIcon, PlusIcon, CameraIcon} from '../../components/icons';
+import {choosePhoto} from '../../lib/imagePicker';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {
   addTechnician,
   removeTechnician,
   resetAll,
   updateShop,
+  updateTechnician,
   useStoreState,
 } from '../../data/store';
 import {useToast} from '../../components/Toast';
@@ -80,6 +84,29 @@ export const SettingsScreen: React.FC = () => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
+        <SectionTitle>Brand</SectionTitle>
+        <Card>
+          <View style={styles.brandRow}>
+            <PhotoPicker
+              uri={shop.logoUri}
+              fallback={(name || 'RS').slice(0, 2)}
+              size={84}
+              shape="rounded"
+              label="Shop logo"
+              background={colors.primary}
+              textColor={colors.textOnPrimary}
+              onChange={u => updateShop({logoUri: u ?? undefined})}
+            />
+            <PhotoPicker
+              uri={shop.ownerAvatarUri}
+              fallback={(ownerName || 'O').slice(0, 2)}
+              size={84}
+              label="Owner photo"
+              onChange={u => updateShop({ownerAvatarUri: u ?? undefined})}
+            />
+          </View>
+        </Card>
+
         <SectionTitle>Shop info</SectionTitle>
         <Card>
           <View style={styles.gap}>
@@ -134,6 +161,31 @@ export const SettingsScreen: React.FC = () => {
             ) : (
               technicians.map(t => (
                 <View key={t.id} style={styles.techRow}>
+                  <AnimatedPressable
+                    onPress={async () => {
+                      const picked = await choosePhoto();
+                      if (picked) {
+                        updateTechnician(t.id, {avatarUri: picked.dataUri});
+                      }
+                    }}
+                    scaleTo={0.94}
+                    style={styles.techAvatarWrap}>
+                    <Avatar
+                      uri={t.avatarUri}
+                      fallback={t.name
+                        .split(' ')
+                        .map(p => p[0] ?? '')
+                        .join('')}
+                      size={44}
+                    />
+                    <View style={styles.techAvatarBadge}>
+                      <CameraIcon
+                        size={11}
+                        color={colors.textOnPrimary}
+                        strokeWidth={2.4}
+                      />
+                    </View>
+                  </AnimatedPressable>
                   <View style={styles.flex}>
                     <Text style={styles.techName}>{t.name}</Text>
                     {t.phone ? (
@@ -204,6 +256,31 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   gap: {gap: spacing.md},
+  brandRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  techAvatarWrap: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  techAvatarBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.card,
+  },
   muted: {fontSize: fontSize.small, color: colors.textMuted},
   techRow: {
     flexDirection: 'row',

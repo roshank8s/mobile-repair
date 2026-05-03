@@ -140,13 +140,26 @@ export const updateShop = (patch: Partial<Shop>) =>
 export const completeOnboarding = (shop: Shop) =>
   setState(s => ({...s, shop: {...shop, onboarded: true}}));
 
-export const addTechnician = (name: string, phone?: string) =>
+export const addTechnician = (
+  name: string,
+  phone?: string,
+  avatarUri?: string,
+) =>
   setState(s => ({
     ...s,
     technicians: [
       ...s.technicians,
-      {id: newId('tech'), name, phone, active: true},
+      {id: newId('tech'), name, phone, avatarUri, active: true},
     ],
+  }));
+
+export const updateTechnician = (
+  id: string,
+  patch: Partial<Omit<import('./types').Technician, 'id'>>,
+) =>
+  setState(s => ({
+    ...s,
+    technicians: s.technicians.map(t => (t.id === id ? {...t, ...patch} : t)),
   }));
 
 export const removeTechnician = (id: string) =>
@@ -248,6 +261,7 @@ export type CreateJobInput = {
   estimateAmount: number;
   promisedAt?: string;
   technicianId?: string;
+  photos?: string[];
 };
 
 export const createJob = (input: CreateJobInput): Job => {
@@ -269,6 +283,7 @@ export const createJob = (input: CreateJobInput): Job => {
       receivedAt: now,
       parts: [],
       statusLog: [{status: 'received', at: now}],
+      photos: input.photos ?? [],
       createdAt: now,
       updatedAt: now,
     };
@@ -278,6 +293,26 @@ export const createJob = (input: CreateJobInput): Job => {
   void nextTicketNo;
   return job;
 };
+
+export const addJobPhoto = (jobId: string, dataUri: string) =>
+  setState(s => ({
+    ...s,
+    jobs: s.jobs.map(j =>
+      j.id === jobId
+        ? {...j, photos: [...(j.photos ?? []), dataUri], updatedAt: new Date().toISOString()}
+        : j,
+    ),
+  }));
+
+export const removeJobPhoto = (jobId: string, index: number) =>
+  setState(s => ({
+    ...s,
+    jobs: s.jobs.map(j => {
+      if (j.id !== jobId) return j;
+      const photos = (j.photos ?? []).filter((_, i) => i !== index);
+      return {...j, photos, updatedAt: new Date().toISOString()};
+    }),
+  }));
 
 export const updateJob = (id: string, patch: Partial<Job>) =>
   setState(s => ({

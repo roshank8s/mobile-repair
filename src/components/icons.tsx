@@ -292,3 +292,48 @@ export const StoreIcon: React.FC<IconProps> = ({
     <Path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
   </Svg>
 );
+
+export const CameraIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Path d="M23 19a2 2 0 0 1 -2 2H3a2 2 0 0 1 -2 -2V8a2 2 0 0 1 2 -2h4l2 -3h6l2 3h4a2 2 0 0 1 2 2z" />
+    <Circle cx="12" cy="13" r="4" />
+  </Svg>
+);
+
+export const ImageIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Rect x="3" y="3" width="18" height="18" rx="2" />
+    <Circle cx="8.5" cy="8.5" r="1.5" />
+    <Polyline points="21 15 16 10 5 21" />
+  </Svg>
+);
+
+export const PencilIcon: React.FC<IconProps> = ({
+  size = 16,
+  color = colors.textOnPrimary,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Path d="M12 20h9" />
+    <Path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1 -4z" />
+  </Svg>
+);
+
+export const XIcon: React.FC<IconProps> = ({
+  size = 18,
+  color = colors.textOnPrimary,
+  strokeWidth = 2.4,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Line x1="18" y1="6" x2="6" y2="18" />
+    <Line x1="6" y1="6" x2="18" y2="18" />
+  </Svg>
+);

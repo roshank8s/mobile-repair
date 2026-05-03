@@ -7,6 +7,7 @@ import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Input} from '../../components/Input';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
+import {Avatar} from '../../components/Avatar';
 import {EmptyState} from '../../components/EmptyState';
 import {FilterChips, type FilterChip} from '../../components/FilterChips';
 import {PhoneIcon, SearchIcon, WhatsAppIcon} from '../../components/icons';
@@ -192,9 +193,11 @@ const CustomerCard: React.FC<{
     <Animated.View
       entering={FadeInDown.duration(260).delay(delay).springify().damping(18)}>
       <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials(customer.name) || '?'}</Text>
-        </View>
+        <Avatar
+          uri={customer.avatarUri}
+          fallback={initials(customer.name) || '?'}
+          size={48}
+        />
 
         <View style={styles.middle}>
           <View style={styles.nameRow}>

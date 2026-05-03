@@ -13,9 +13,10 @@ import {Card} from '../../components/Card';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {StatusPill} from '../../components/StatusPill';
 import {MoneyText} from '../../components/MoneyText';
+import {PhotoPicker} from '../../components/PhotoPicker';
 import {PhoneIcon, WhatsAppIcon} from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
-import {useStoreState} from '../../data/store';
+import {upsertCustomer, useStoreState} from '../../data/store';
 import {formatINR} from '../../lib/currency';
 import {formatRelative} from '../../lib/date';
 import {callPhone, openWhatsApp} from '../../lib/whatsapp';
@@ -56,6 +57,28 @@ export const CustomerDetailScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(260)}>
           <Card>
+            <View style={styles.headerRow}>
+              <PhotoPicker
+                uri={customer.avatarUri}
+                fallback={customer.name.split(' ').map(p => p[0] ?? '').join('')}
+                size={72}
+                onChange={u =>
+                  upsertCustomer({
+                    id: customer.id,
+                    name: customer.name,
+                    phone: customer.phone,
+                    email: customer.email,
+                    address: customer.address,
+                    avatarUri: u ?? undefined,
+                  })
+                }
+              />
+              <View style={styles.flex}>
+                <Text style={styles.headerName}>{customer.name}</Text>
+                <Text style={styles.headerSub}>+91 {customer.phone}</Text>
+              </View>
+            </View>
+            <View style={styles.divider} />
             <Text style={styles.label}>Phone</Text>
             <Text style={styles.value}>+91 {customer.phone}</Text>
             {customer.email ? (
@@ -152,6 +175,23 @@ export const CustomerDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   flex: {flex: 1},
   scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
+  headerRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.lg},
+  headerName: {
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+  },
+  headerSub: {
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+    marginTop: 2,
+    fontVariant: ['tabular-nums'],
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.divider,
+    marginVertical: spacing.lg,
+  },
   label: {
     fontSize: fontSize.caption,
     fontWeight: fontWeight.bold,

@@ -1,5 +1,5 @@
 import React, {useMemo, useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Image, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Animated, {FadeInDown} from 'react-native-reanimated';
@@ -10,7 +10,7 @@ import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {EmptyState} from '../../components/EmptyState';
 import {Fab} from '../../components/Fab';
 import {FilterChips, type FilterChip} from '../../components/FilterChips';
-import {SearchIcon} from '../../components/icons';
+import {PackageIcon, SearchIcon} from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
 import {formatINR} from '../../lib/currency';
@@ -168,6 +168,13 @@ const PartRow: React.FC<{part: Part; onPress: () => void; delay: number}> = ({
     <Animated.View
       entering={FadeInDown.duration(260).delay(delay).springify().damping(18)}>
       <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
+        <View style={styles.thumb}>
+          {part.imageUri ? (
+            <Image source={{uri: part.imageUri}} style={styles.thumbImg} />
+          ) : (
+            <PackageIcon size={26} color={colors.textSubtle} strokeWidth={1.6} />
+          )}
+        </View>
         <View style={styles.flex}>
           <Text style={styles.name} numberOfLines={1}>
             {part.name}
@@ -207,14 +214,24 @@ const styles = StyleSheet.create({
   list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
   row: {
     flexDirection: 'row',
-    gap: spacing.lg,
-    padding: spacing.lg,
+    gap: spacing.md,
+    padding: spacing.md,
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radii.lg,
     alignItems: 'flex-start',
   },
+  thumb: {
+    width: 60,
+    height: 60,
+    borderRadius: radii.md,
+    backgroundColor: colors.cardMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  thumbImg: {width: '100%', height: '100%'},
   name: {
     fontSize: fontSize.bodyLg,
     fontWeight: fontWeight.bold,
