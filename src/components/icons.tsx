@@ -220,3 +220,75 @@ export const ArrowRightIcon: React.FC<IconProps> = ({
     <Polyline points="12 5 19 12 12 19" />
   </Svg>
 );
+
+export const LogOutIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.danger,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Path d="M9 21H5a2 2 0 0 1 -2 -2V5a2 2 0 0 1 2 -2h4" />
+    <Polyline points="16 17 21 12 16 7" />
+    <Line x1="21" y1="12" x2="9" y2="12" />
+  </Svg>
+);
+
+export const HelpIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Circle cx="12" cy="12" r="10" />
+    <Path d="M9.09 9a3 3 0 0 1 5.83 1c0 2 -3 3 -3 3" />
+    <Line x1="12" y1="17" x2="12.01" y2="17" />
+  </Svg>
+);
+
+export const BarChartIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Line x1="12" y1="20" x2="12" y2="10" />
+    <Line x1="18" y1="20" x2="18" y2="4" />
+    <Line x1="6" y1="20" x2="6" y2="16" />
+  </Svg>
+);
+
+export const ReceiptIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Path d="M5 21V5a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-2.5 -1.5L14 21l-2 -1.5L10 21l-2.5 -1.5z" />
+    <Line x1="9" y1="9" x2="15" y2="9" />
+    <Line x1="9" y1="13" x2="15" y2="13" />
+  </Svg>
+);
+
+export const PercentIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Line x1="19" y1="5" x2="5" y2="19" />
+    <Circle cx="6.5" cy="6.5" r="2.5" />
+    <Circle cx="17.5" cy="17.5" r="2.5" />
+  </Svg>
+);
+
+export const StoreIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Path d="M3 9l1.5 -5h15L21 9" />
+    <Path d="M3 9v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1 -1V9" />
+    <Path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
+  </Svg>
+);

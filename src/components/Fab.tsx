@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
+import {StyleProp, StyleSheet, Text, View, ViewStyle} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -7,19 +7,22 @@ import Animated, {
 } from 'react-native-reanimated';
 import {AnimatedPressable} from './AnimatedPressable';
 import {PlusIcon} from './icons';
-import {colors, motion, shadows, spacing} from '../theme/tokens';
+import {colors, fontSize, fontWeight, motion, radii, shadows, spacing} from '../theme/tokens';
 
 type Props = {
   onPress: () => void;
+  label?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-export const Fab: React.FC<Props> = ({onPress, style}) => {
+export const Fab: React.FC<Props> = ({onPress, label, style}) => {
   const rot = useSharedValue(0);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{rotate: `${rot.value}deg`}],
   }));
+
+  const isExtended = !!label;
 
   return (
     <View style={[styles.wrap, style]} pointerEvents="box-none">
@@ -28,11 +31,12 @@ export const Fab: React.FC<Props> = ({onPress, style}) => {
           rot.value = withSpring(rot.value + 90, motion.springBouncy);
           onPress();
         }}
-        style={styles.fab}
-        scaleTo={0.92}>
+        style={[styles.fab, isExtended && styles.fabExtended]}
+        scaleTo={0.94}>
         <Animated.View style={animStyle}>
-          <PlusIcon size={28} color={colors.textOnAccent} strokeWidth={2.6} />
+          <PlusIcon size={isExtended ? 22 : 28} color={colors.textOnAccent} strokeWidth={2.6} />
         </Animated.View>
+        {isExtended ? <Text style={styles.label}>{label}</Text> : null}
       </AnimatedPressable>
     </View>
   );
@@ -52,5 +56,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.fab,
+  },
+  fabExtended: {
+    width: 'auto',
+    height: 56,
+    borderRadius: radii.pill,
+    flexDirection: 'row',
+    paddingHorizontal: spacing.xl,
+    gap: spacing.sm,
+  },
+  label: {
+    color: colors.textOnAccent,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 0.2,
   },
 });

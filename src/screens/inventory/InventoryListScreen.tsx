@@ -9,56 +9,128 @@ import {Input} from '../../components/Input';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {EmptyState} from '../../components/EmptyState';
 import {Fab} from '../../components/Fab';
-import {AlertIcon, ChevronRightIcon, SearchIcon} from '../../components/icons';
+import {SearchIcon} from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
 import {formatINR} from '../../lib/currency';
+import type {Part} from '../../data/types';
 import type {RootStackParamList} from '../../app/navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+type StockState = 'in' | 'low' | 'out';
+type FilterKey = 'all' | 'low' | 'high' | string; // string = brand
+
+const stockStateOf = (p: Part): StockState => {
+  if (p.stock === 0) return 'out';
+  if (p.stock <= p.lowStockAt) return 'low';
+  return 'in';
+};
+
+const STOCK_META: Record<
+  StockState,
+  {label: string; bg: string; fg: string; dot: string}
+> = {
+  in: {label: 'In stock', bg: colors.successSoft, fg: '#166534', dot: colors.success},
+  low: {label: 'Low stock', bg: colors.warningSoft, fg: '#92400E', dot: colors.warning},
+  out: {label: 'Out of stock', bg: colors.dangerSoft, fg: colors.danger, dot: colors.danger},
+};
 
 export const InventoryListScreen: React.FC = () => {
   const nav = useNavigation<Nav>();
   const parts = useStoreState(s => s.parts);
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<FilterKey>('all');
+
+  // Top brands by part count
+  const topBrands = useMemo(() => {
+    const counts: Record<string, number> = {};
+    parts.forEach(p => {
+      const b = (p.brand ?? 'Generic').trim();
+      counts[b] = (counts[b] ?? 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([brand]) => brand);
+  }, [parts]);
+
+  const lowCount = parts.filter(p => p.stock <= p.lowStockAt).length;
+  const outCount = parts.filter(p => p.stock === 0).length;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return parts;
-    return parts.filter(
-      p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.brand?.toLowerCase().includes(q) ?? false) ||
-        (p.compatModels?.toLowerCase().includes(q) ?? false),
-    );
-  }, [parts, query]);
+    return parts
+      .filter(p => {
+        if (filter === 'all') return true;
+        if (filter === 'low') return p.stock <= p.lowStockAt;
+        if (filter === 'high') return p.stock > p.lowStockAt * 2;
+        // brand filter
+        return (p.brand ?? 'Generic') === filter;
+      })
+      .filter(p => {
+        if (!q) return true;
+        return (
+          p.name.toLowerCase().includes(q) ||
+          (p.brand?.toLowerCase().includes(q) ?? false) ||
+          (p.compatModels?.toLowerCase().includes(q) ?? false)
+        );
+      });
+  }, [parts, query, filter]);
 
-  const lowCount = parts.filter(p => p.stock <= p.lowStockAt).length;
+  const filters: {key: FilterKey; label: string; count?: number}[] = [
+    {key: 'all', label: 'All', count: parts.length},
+    {key: 'low', label: 'Low stock', count: lowCount},
+    {key: 'high', label: 'High stock'},
+    ...topBrands.map(b => ({key: b, label: b})),
+  ];
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader
         title="Inventory"
-        subtitle={`${parts.length} parts${lowCount ? ` · ${lowCount} low` : ''}`}
+        subtitle={
+          outCount
+            ? `${parts.length} parts · ${outCount} out, ${lowCount} low`
+            : `${parts.length} parts${lowCount ? ` · ${lowCount} low` : ''}`
+        }
       />
 
       <View style={styles.searchBox}>
         <Input
           value={query}
           onChangeText={setQuery}
-          placeholder="Search parts"
+          placeholder="Search by part, brand, model"
           leftAdornment={<SearchIcon size={18} color={colors.textMuted} />}
         />
       </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersRow}>
+        {filters.map(f => (
+          <Chip
+            key={f.key}
+            active={filter === f.key}
+            label={f.label}
+            count={f.count}
+            onPress={() => setFilter(f.key)}
+          />
+        ))}
+      </ScrollView>
 
       {filtered.length === 0 ? (
         <View style={styles.flex}>
           <EmptyState
             kind="parts"
-            title={query ? 'No parts match' : 'No parts in inventory'}
-            message={query ? 'Try a different keyword.' : 'Tap + to add a part.'}
-            actionLabel={query ? undefined : 'Add part'}
-            onAction={query ? undefined : () => nav.navigate('PartEdit')}
+            title={query || filter !== 'all' ? 'No parts match' : 'No parts in inventory'}
+            message={
+              query || filter !== 'all'
+                ? 'Try a different keyword or filter.'
+                : 'Tap "Add Part" to add your first item.'
+            }
+            actionLabel={query || filter !== 'all' ? undefined : 'Add part'}
+            onAction={query || filter !== 'all' ? undefined : () => nav.navigate('PartEdit')}
           />
         </View>
       ) : (
@@ -67,52 +139,90 @@ export const InventoryListScreen: React.FC = () => {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}>
           {filtered.map((p, i) => (
-            <Animated.View
+            <PartRow
               key={p.id}
-              entering={FadeInDown.duration(260)
-                .delay(i * 30)
-                .springify()
-                .damping(18)}>
-              <AnimatedPressable
-                onPress={() => nav.navigate('PartEdit', {partId: p.id})}
-                style={styles.row}
-                scaleTo={0.99}>
-                <View style={styles.flex}>
-                  <View style={styles.headerRow}>
-                    <Text style={styles.name}>{p.name}</Text>
-                    {p.stock <= p.lowStockAt ? (
-                      <View style={styles.lowBadge}>
-                        <AlertIcon size={12} color={colors.warning} />
-                        <Text style={styles.lowText}>Low</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Text style={styles.meta}>
-                    {p.brand ?? 'Generic'} · {p.compatModels ?? 'Universal'}
-                  </Text>
-                  <View style={styles.priceRow}>
-                    <Text style={styles.price}>{formatINR(p.sellPrice)}</Text>
-                    <Text style={styles.cost}>cost {formatINR(p.costPrice)}</Text>
-                    <Text
-                      style={[
-                        styles.stockTag,
-                        p.stock <= p.lowStockAt && {color: colors.warning},
-                        p.stock === 0 && {color: colors.danger},
-                      ]}>
-                      {p.stock} in stock
-                    </Text>
-                  </View>
-                </View>
-                <ChevronRightIcon size={20} color={colors.textSubtle} />
-              </AnimatedPressable>
-            </Animated.View>
+              part={p}
+              onPress={() => nav.navigate('PartEdit', {partId: p.id})}
+              delay={i * 30}
+            />
           ))}
-          <View style={{height: 96}} />
+          <View style={{height: 110}} />
         </ScrollView>
       )}
 
-      <Fab onPress={() => nav.navigate('PartEdit')} />
+      <Fab label="Add Part" onPress={() => nav.navigate('PartEdit')} />
     </SafeAreaView>
+  );
+};
+
+const Chip: React.FC<{
+  active: boolean;
+  label: string;
+  count?: number;
+  onPress: () => void;
+}> = ({active, label, count, onPress}) => (
+  <AnimatedPressable
+    onPress={onPress}
+    style={[styles.chip, active && styles.chipActive]}
+    scaleTo={0.95}>
+    <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>
+      {label}
+    </Text>
+    {count !== undefined && count > 0 ? (
+      <View style={[styles.chipBadge, active && styles.chipBadgeActive]}>
+        <Text style={[styles.chipBadgeText, active && styles.chipBadgeTextActive]}>
+          {count}
+        </Text>
+      </View>
+    ) : null}
+  </AnimatedPressable>
+);
+
+const PartRow: React.FC<{part: Part; onPress: () => void; delay: number}> = ({
+  part,
+  onPress,
+  delay,
+}) => {
+  const state = stockStateOf(part);
+  const meta = STOCK_META[state];
+  const profit = part.sellPrice - part.costPrice;
+  const profitPct =
+    part.sellPrice > 0 ? Math.round((profit / part.sellPrice) * 100) : 0;
+
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(260).delay(delay).springify().damping(18)}>
+      <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
+        <View style={styles.flex}>
+          <Text style={styles.name} numberOfLines={1}>
+            {part.name}
+          </Text>
+          <Text style={styles.meta} numberOfLines={1}>
+            {part.brand ?? 'Generic'}
+            {part.compatModels ? ` · ${part.compatModels}` : ''}
+          </Text>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.price}>{formatINR(part.sellPrice)}</Text>
+            {profit > 0 ? (
+              <Text style={styles.profit}>
+                +{formatINR(profit)} ({profitPct}%)
+              </Text>
+            ) : null}
+          </View>
+          <Text style={styles.cost}>cost {formatINR(part.costPrice)}</Text>
+        </View>
+
+        <View style={styles.right}>
+          <Text style={styles.stockNum}>{part.stock}</Text>
+          <Text style={styles.stockLabel}>in stock</Text>
+          <View style={[styles.statusBadge, {backgroundColor: meta.bg}]}>
+            <View style={[styles.statusDot, {backgroundColor: meta.dot}]} />
+            <Text style={[styles.statusText, {color: meta.fg}]}>{meta.label}</Text>
+          </View>
+        </View>
+      </AnimatedPressable>
+    </Animated.View>
   );
 };
 
@@ -120,60 +230,115 @@ const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: colors.bg},
   flex: {flex: 1},
   searchBox: {paddingHorizontal: spacing.lg, marginBottom: spacing.sm},
+  filtersRow: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 36,
+  },
+  chipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
+  chipLabel: {
+    fontSize: fontSize.small,
+    fontWeight: fontWeight.semibold,
+    color: colors.textMuted,
+  },
+  chipLabelActive: {color: colors.textOnPrimary},
+  chipBadge: {
+    minWidth: 20,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+    backgroundColor: colors.cardMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipBadgeActive: {backgroundColor: 'rgba(255,255,255,0.18)'},
+  chipBadgeText: {
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
+    color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
+  },
+  chipBadgeTextActive: {color: colors.textOnPrimary},
   list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
+    gap: spacing.lg,
+    padding: spacing.lg,
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radii.lg,
+    alignItems: 'flex-start',
   },
-  headerRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.sm},
   name: {
-    fontSize: fontSize.body,
+    fontSize: fontSize.bodyLg,
     fontWeight: fontWeight.bold,
     color: colors.text,
-    flex: 1,
   },
   meta: {fontSize: fontSize.small, color: colors.textMuted, marginTop: 2},
   priceRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+    alignItems: 'baseline',
+    gap: spacing.sm,
     marginTop: spacing.sm,
+    flexWrap: 'wrap',
   },
   price: {
-    fontSize: fontSize.body,
+    fontSize: fontSize.subhead,
     fontWeight: fontWeight.bold,
     color: colors.primary,
+    fontVariant: ['tabular-nums'],
+  },
+  profit: {
+    fontSize: fontSize.small,
+    fontWeight: fontWeight.semibold,
+    color: colors.success,
     fontVariant: ['tabular-nums'],
   },
   cost: {
     fontSize: fontSize.caption,
     color: colors.textSubtle,
+    marginTop: 2,
     fontVariant: ['tabular-nums'],
   },
-  stockTag: {
-    marginLeft: 'auto',
-    fontSize: fontSize.caption,
-    color: colors.textMuted,
-    fontWeight: fontWeight.semibold,
+  right: {alignItems: 'flex-end', minWidth: 90, gap: spacing.xs},
+  stockNum: {
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    lineHeight: 28,
   },
-  lowBadge: {
+  stockLabel: {
+    fontSize: fontSize.caption,
+    color: colors.textSubtle,
+    marginTop: -2,
+  },
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    backgroundColor: colors.warningSoft,
+    paddingVertical: 3,
     borderRadius: radii.pill,
+    marginTop: spacing.xs,
   },
-  lowText: {
+  statusDot: {width: 6, height: 6, borderRadius: 3},
+  statusText: {
     fontSize: fontSize.caption,
-    color: '#92400E',
     fontWeight: fontWeight.bold,
+    letterSpacing: 0.2,
   },
 });
