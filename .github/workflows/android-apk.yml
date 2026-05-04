@@ -1,0 +1,91 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Assemble debug-signed APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Install JS dependencies
+        run: |
+          if [ -f yarn.lock ]; then
+            yarn install --frozen-lockfile
+          else
+            yarn install
+          fi
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x android/gradlew
+
+      - name: Build release APK (signed with debug keystore)
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m"
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK_PATH=$(find android/app/build/outputs/apk/release -name '*.apk' | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No APK produced"; exit 1
+          fi
+          echo "path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "name=repair-shop-${{ github.run_number }}-${GITHUB_SHA::7}.apk" >> "$GITHUB_OUTPUT"
+          ls -lh "$APK_PATH"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: ${{ steps.apk.outputs.path }}
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Summary
+        run: |
+          echo "### Repair Shop APK ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download artifact **${{ steps.apk.outputs.name }}** from this run, transfer to your Android device, allow 'Install unknown apps' for your file manager / browser, and tap to install." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Signing: debug keystore (development install only — not for Play Store)." >> $GITHUB_STEP_SUMMARY

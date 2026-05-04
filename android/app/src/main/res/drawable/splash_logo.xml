@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="160dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- soft saffron ring backdrop -->
+    <path
+        android:fillColor="#1A2A2152"
+        android:pathData="M60,12 m-50,0 a50,50 0 1,0 100,0 a50,50 0 1,0 -100,0" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M60,12 m-44,0 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0
+                          M60,12 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0 Z" />
+    <!-- wrench head -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M82.5,33.5
+                          a14,14 0 0,0 -16.6,16.6
+                          L40.5,75.5
+                          a8,8 0 0,0 0,11.3
+                          l2.7,2.7
+                          a8,8 0 0,0 11.3,0
+                          L79.9,64.1
+                          a14,14 0 0,0 16.6,-16.6
+                          l-7.6,7.6
+                          a4,4 0 0,1 -5.7,0
+                          l-3.5,-3.5
+                          a4,4 0 0,1 0,-5.7
+                          z" />
+    <!-- spark -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,30 L48,38 L56,42 L48,46 L44,54 L40,46 L32,42 L40,38 Z" />
+</vector>
