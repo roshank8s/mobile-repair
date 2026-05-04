@@ -5,6 +5,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ThemeProvider} from '../theme/ThemeContext';
 import {ToastProvider} from '../components/Toast';
 import {SplashOverlay} from '../components/SplashOverlay';
+import {BrandIntro} from '../components/BrandIntro';
 import {RootNavigator} from './navigation/RootNavigator';
 import {hydrate, useHydrated} from '../data/store';
 import {colors} from '../theme/tokens';
@@ -28,6 +29,7 @@ const AppBoot: React.FC = () => {
   const ready = useHydrated();
   const [splashGone, setSplashGone] = useState(false);
   const [splashVisible, setSplashVisible] = useState(true);
+  const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -49,6 +51,9 @@ const AppBoot: React.FC = () => {
           visible={splashVisible}
           onFinished={() => setSplashGone(true)}
         />
+      ) : null}
+      {splashGone && !introDone ? (
+        <BrandIntro onFinished={() => setIntroDone(true)} />
       ) : null}
     </View>
   );
