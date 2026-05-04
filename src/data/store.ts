@@ -85,7 +85,7 @@ export const hydrate = async (): Promise<void> => {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as AppState;
-      state = {...initialState, ...parsed};
+      state = migrate({...initialState, ...parsed});
     } else {
       // First launch: pre-seed inventory + sample customers so the UI is alive.
       const seeded = seedData();
@@ -100,6 +100,25 @@ export const hydrate = async (): Promise<void> => {
   hydrated = true;
   notify();
 };
+
+/**
+ * Backfill fields that didn't exist in earlier app versions, so users
+ * upgrading from a previous build don't crash on `job.photos.length` etc.
+ */
+const migrate = (s: AppState): AppState => ({
+  ...s,
+  jobs: (s.jobs ?? []).map(j => ({
+    ...j,
+    photos: Array.isArray(j.photos) ? j.photos : [],
+    parts: Array.isArray(j.parts) ? j.parts : [],
+    statusLog: Array.isArray(j.statusLog) ? j.statusLog : [],
+  })),
+  customers: s.customers ?? [],
+  parts: s.parts ?? [],
+  technicians: s.technicians ?? [],
+  payments: s.payments ?? [],
+  invoices: s.invoices ?? [],
+});
 
 export const resetAll = async () => {
   await AsyncStorage.removeItem(STORAGE_KEY);

@@ -147,9 +147,9 @@ export const JobDetailScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>
-        {job.photos.length > 0 ? (
+        {(job.photos ?? []).length > 0 ? (
           <PhotoHero
-            photos={job.photos}
+            photos={job.photos ?? []}
             status={job.status}
             ticketNo={job.ticketNo}
           />
