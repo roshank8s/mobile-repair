@@ -5,7 +5,6 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ThemeProvider} from '../theme/ThemeContext';
 import {ToastProvider} from '../components/Toast';
 import {SplashOverlay} from '../components/SplashOverlay';
-import {BrandIntro} from '../components/BrandIntro';
 import {RootNavigator} from './navigation/RootNavigator';
 import {hydrate, useHydrated} from '../data/store';
 import {colors} from '../theme/tokens';
@@ -29,7 +28,6 @@ const AppBoot: React.FC = () => {
   const ready = useHydrated();
   const [splashGone, setSplashGone] = useState(false);
   const [splashVisible, setSplashVisible] = useState(true);
-  const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -37,8 +35,9 @@ const AppBoot: React.FC = () => {
 
   useEffect(() => {
     if (ready) {
-      // small grace delay so the splash always shows for a beat (avoids flicker on warm starts)
-      const t = setTimeout(() => setSplashVisible(false), 350);
+      // hold the splash for ~1.6s so the brand card is on screen long enough
+      // to register, then start the fade
+      const t = setTimeout(() => setSplashVisible(false), 1600);
       return () => clearTimeout(t);
     }
   }, [ready]);
@@ -51,9 +50,6 @@ const AppBoot: React.FC = () => {
           visible={splashVisible}
           onFinished={() => setSplashGone(true)}
         />
-      ) : null}
-      {splashGone && !introDone ? (
-        <BrandIntro onFinished={() => setIntroDone(true)} />
       ) : null}
     </View>
   );
