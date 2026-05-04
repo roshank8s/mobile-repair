@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Image, StyleSheet, View} from 'react-native';
+import {Image, StyleSheet} from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -49,9 +49,7 @@ export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
     <Animated.View
       pointerEvents={visible ? 'auto' : 'none'}
       style={[StyleSheet.absoluteFill, styles.wrap, wrapStyle]}>
-      <View style={styles.cardWrap}>
-        <Image source={RISHI_CARD} style={styles.card} resizeMode="contain" />
-      </View>
+      <Image source={RISHI_CARD} style={StyleSheet.absoluteFill} resizeMode="cover" />
     </Animated.View>
   );
 };
@@ -59,17 +57,6 @@ export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     zIndex: 1000,
-  },
-  cardWrap: {
-    width: '85%',
-    maxWidth: 380,
-    aspectRatio: 0.706,
-  },
-  card: {
-    width: '100%',
-    height: '100%',
   },
 });

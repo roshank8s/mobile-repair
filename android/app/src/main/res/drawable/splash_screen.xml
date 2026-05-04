@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Indigo brand backdrop -->
+    <!-- Indigo fallback in case the bitmap is still loading (extremely brief). -->
     <item android:drawable="@color/brand_primary" />
-    <!-- Portrait card centred at a fixed size that suits most phones -->
-    <item
-        android:gravity="center"
-        android:width="320dp"
-        android:height="452dp">
-        <bitmap android:src="@drawable/rishi22_splash" />
+    <!-- Bitmap stretched to fill the entire window. -->
+    <item>
+        <bitmap
+            android:src="@drawable/rishi22_splash"
+            android:gravity="fill" />
     </item>
 </layer-list>
