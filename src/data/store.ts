@@ -3,6 +3,7 @@ import {useEffect, useState, useSyncExternalStore} from 'react';
 import type {
   AppState,
   Customer,
+  Expense,
   Invoice,
   Job,
   JobStatus,
@@ -43,6 +44,7 @@ const initialState: AppState = {
   parts: [],
   payments: [],
   invoices: [],
+  expenses: [],
   ticketCounter: 1000,
   invoiceCounter: 100,
 };
@@ -118,6 +120,7 @@ const migrate = (s: AppState): AppState => ({
   technicians: s.technicians ?? [],
   payments: s.payments ?? [],
   invoices: s.invoices ?? [],
+  expenses: s.expenses ?? [],
 });
 
 export const resetAll = async () => {
@@ -281,6 +284,7 @@ export type CreateJobInput = {
   promisedAt?: string;
   technicianId?: string;
   photos?: string[];
+  warrantyDays?: number;
 };
 
 export const createJob = (input: CreateJobInput): Job => {
@@ -303,6 +307,7 @@ export const createJob = (input: CreateJobInput): Job => {
       parts: [],
       statusLog: [{status: 'received', at: now}],
       photos: input.photos ?? [],
+      warrantyDays: input.warrantyDays,
       createdAt: now,
       updatedAt: now,
     };
@@ -480,6 +485,29 @@ export const createInvoice = (
   void peekInvoiceCounter;
   return inv;
 };
+
+// ----- Expenses -----
+export const addExpense = (
+  input: Omit<Expense, 'id' | 'at'> & {at?: string},
+): Expense => {
+  let exp!: Expense;
+  setState(s => {
+    exp = {
+      id: newId('exp'),
+      at: input.at ?? new Date().toISOString(),
+      label: input.label,
+      amount: input.amount,
+      category: input.category,
+      mode: input.mode,
+      note: input.note,
+    };
+    return {...s, expenses: [exp, ...s.expenses]};
+  });
+  return exp;
+};
+
+export const deleteExpense = (id: string) =>
+  setState(s => ({...s, expenses: s.expenses.filter(e => e.id !== id)}));
 
 // ----- Selectors -----
 export const selectCustomerById = (id?: string) =>

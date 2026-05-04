@@ -281,6 +281,19 @@ export const PercentIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
+export const CoinsIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = colors.text,
+  strokeWidth = 2,
+}) => (
+  <Svg {...base(size, color, strokeWidth)}>
+    <Circle cx="9" cy="9" r="6" />
+    <Path d="M3 9c0 3.3 2.7 6 6 6 a6 6 0 0 0 6 -6" opacity="0" />
+    <Path d="M15 11.7a6 6 0 1 0 -3.3 -3.3" />
+    <Path d="M21 14.7a6 6 0 1 1 -8.3 8.3" opacity="0" />
+  </Svg>
+);
+
 export const StoreIcon: React.FC<IconProps> = ({
   size = 22,
   color = colors.text,
