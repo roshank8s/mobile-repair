@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Dark backdrop matches the card's frame so the artwork sits cleanly. -->
-    <item android:drawable="@android:color/black" />
-    <!-- Card centred and constrained to a portrait-friendly box. -->
+    <!-- Indigo brand backdrop -->
+    <item android:drawable="@color/brand_primary" />
+    <!-- Portrait card centred at a fixed size that suits most phones -->
     <item
         android:gravity="center"
-        android:width="340dp"
-        android:height="210dp">
+        android:width="320dp"
+        android:height="452dp">
         <bitmap android:src="@drawable/rishi22_splash" />
     </item>
 </layer-list>

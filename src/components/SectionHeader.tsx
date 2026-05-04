@@ -35,7 +35,7 @@ export const SectionHeader: React.FC<Props> = ({
           style={styles.action}
           scaleTo={0.95}>
           <Text style={styles.actionLabel}>{actionLabel}</Text>
-          <ChevronRightIcon size={14} color={colors.primary} strokeWidth={2.4} />
+          <ChevronRightIcon size={14} color={colors.accent} strokeWidth={2.4} />
         </AnimatedPressable>
       ) : null}
     </View>
@@ -54,11 +54,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.subhead,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textOnBg,
   },
   caption: {
     fontSize: fontSize.caption,
-    color: colors.textSubtle,
+    color: colors.textOnBgSubtle,
     marginTop: 2,
   },
   action: {
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: fontSize.small,
     fontWeight: fontWeight.bold,
-    color: colors.primary,
+    color: colors.accent,
     letterSpacing: 0.2,
   },
 });

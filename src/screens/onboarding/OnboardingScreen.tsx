@@ -218,13 +218,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.display,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textOnBg,
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: fontSize.body,
-    color: colors.textMuted,
+    color: colors.textOnBgMuted,
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
     lineHeight: 22,

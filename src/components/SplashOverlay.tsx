@@ -9,6 +9,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import {colors} from '../theme/tokens';
+
 const RISHI_CARD = require('../assets/brand/rishi22-card.jpg');
 
 type Props = {
@@ -56,15 +58,15 @@ export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: '#000000',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
   },
   cardWrap: {
-    width: '92%',
-    maxWidth: 560,
-    aspectRatio: 1.62,
+    width: '85%',
+    maxWidth: 380,
+    aspectRatio: 0.706,
   },
   card: {
     width: '100%',

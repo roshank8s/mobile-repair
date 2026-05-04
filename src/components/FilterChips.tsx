@@ -84,15 +84,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   label: {
     fontSize: fontSize.small,
     fontWeight: fontWeight.semibold,
     color: colors.textMuted,
   },
-  labelActive: {color: colors.textOnPrimary},
+  labelActive: {color: colors.textOnAccent},
   badge: {
     minWidth: 20,
     paddingHorizontal: 6,
@@ -102,12 +102,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeActive: {backgroundColor: 'rgba(255,255,255,0.18)'},
+  badgeActive: {backgroundColor: 'rgba(0,0,0,0.18)'},
   badgeText: {
     fontSize: fontSize.caption,
     fontWeight: fontWeight.bold,
     color: colors.textMuted,
     fontVariant: ['tabular-nums'],
   },
-  badgeTextActive: {color: colors.textOnPrimary},
+  badgeTextActive: {color: colors.textOnAccent},
 });

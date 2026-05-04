@@ -41,7 +41,10 @@ export const colors = {
   accent: palette.amber500,
   accentSoft: palette.amber50,
 
-  bg: palette.surface,
+  // Canvas is now deep indigo across the app. Cards stay light so content
+  // hierarchy reads cleanly on top of the saturated backdrop.
+  bg: palette.indigo950,
+  bgRaised: palette.indigo900,
   card: palette.surfaceRaised,
   cardMuted: palette.surfaceMuted,
   border: palette.ink100,
@@ -52,6 +55,11 @@ export const colors = {
   textSubtle: palette.ink400,
   textOnPrimary: palette.white,
   textOnAccent: palette.ink900,
+  // Text colours that sit directly on the indigo canvas (not inside a card).
+  textOnBg: palette.white,
+  textOnBgMuted: '#C7D2FE',
+  textOnBgSubtle: '#A5B4FC',
+  borderOnBg: 'rgba(255,255,255,0.14)',
 
   success: palette.green600,
   successSoft: palette.green50,

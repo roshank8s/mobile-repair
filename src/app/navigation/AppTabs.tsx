@@ -27,13 +27,13 @@ const TabIcon: React.FC<{
     <View style={styles.tabBtn}>
       <Icon
         size={22}
-        color={focused ? colors.primary : colors.textSubtle}
+        color={focused ? colors.accent : colors.textOnBgMuted}
         strokeWidth={focused ? 2.4 : 1.8}
       />
       <Text
         style={[
           styles.tabLabel,
-          {color: focused ? colors.primary : colors.textSubtle},
+          {color: focused ? colors.accent : colors.textOnBgMuted},
         ]}>
         {label}
       </Text>
@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
   tabBar: {
     height: 70,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.card,
+    borderTopColor: colors.borderOnBg,
+    backgroundColor: colors.primary,
     paddingTop: 8,
     paddingBottom: 10,
     elevation: 0,
