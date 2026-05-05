@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Image, StyleSheet} from 'react-native';
+import {Image, StatusBar, StyleSheet} from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -49,6 +49,14 @@ export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
     <Animated.View
       pointerEvents={visible ? 'auto' : 'none'}
       style={[StyleSheet.absoluteFill, styles.wrap, wrapStyle]}>
+      {/* Transparent / translucent status bar so the image extends to the
+          very top of the screen during splash. The parent StatusBar takes
+          over again once the splash unmounts. */}
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
       <Image source={RISHI_CARD} style={StyleSheet.absoluteFill} resizeMode="cover" />
     </Animated.View>
   );
