@@ -9,8 +9,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import {colors} from '../theme/tokens';
-
 const RISHI_CARD = require('../assets/brand/rishi22-card.jpg');
 
 type Props = {
@@ -19,9 +17,9 @@ type Props = {
 };
 
 /**
- * JS-side splash overlay that exactly mirrors the native splash drawable
- * (Rishi22 card centred on black). It continues to cover the UI while
- * React boots, then fades out once the app is ready.
+ * JS-side splash overlay that exactly mirrors the native splash drawable:
+ * the Rishi22 card stretched to fill every pixel of the screen, no
+ * background colour behind it. Fades out once the app is ready.
  */
 export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
   const opacity = useSharedValue(1);
@@ -49,22 +47,26 @@ export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
     <Animated.View
       pointerEvents={visible ? 'auto' : 'none'}
       style={[StyleSheet.absoluteFill, styles.wrap, wrapStyle]}>
-      {/* Transparent / translucent status bar so the image extends to the
-          very top of the screen during splash. The parent StatusBar takes
-          over again once the splash unmounts. */}
+      {/* Translucent system bars so the image extends to the very top
+          and bottom of the screen during splash. */}
       <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle="light-content"
       />
-      <Image source={RISHI_CARD} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Image
+        source={RISHI_CARD}
+        style={StyleSheet.absoluteFill}
+        resizeMode="stretch"
+      />
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: colors.primary,
     zIndex: 1000,
+    // No background colour — the Image fills every pixel itself.
   },
 });
+

@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Indigo fallback in case the bitmap is still loading (extremely brief). -->
-    <item android:drawable="@color/brand_primary" />
-    <!-- Bitmap stretched to fill the entire window. -->
-    <item>
-        <bitmap
-            android:src="@drawable/rishi22_splash"
-            android:gravity="fill" />
-    </item>
-</layer-list>
+<!--
+  Single bitmap that stretches to fill the window in both dimensions.
+  No layer-list, no indigo backing — the bitmap IS the splash.
+-->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/rishi22_splash"
+    android:gravity="fill"
+    android:tileMode="disabled" />
