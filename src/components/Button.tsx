@@ -10,7 +10,7 @@ import {
 import {AnimatedPressable} from './AnimatedPressable';
 import {colors, fontSize, fontWeight, radii, spacing} from '../theme/tokens';
 
-type Variant = 'primary' | 'accent' | 'ghost' | 'outline' | 'danger';
+type Variant = 'primary' | 'accent' | 'ghost' | 'outline' | 'danger' | 'secondary';
 type Size = 'sm' | 'md' | 'lg';
 
 type Props = {
@@ -57,9 +57,7 @@ export const Button: React.FC<Props> = ({
         ) : (
           <>
             {leftIcon ? <View style={styles.icon}>{leftIcon}</View> : null}
-            <Text style={[styles.label, sizeStyle.label, v.label]}>
-              {label}
-            </Text>
+            <Text style={[styles.label, sizeStyle.label, v.label]}>{label}</Text>
             {rightIcon ? <View style={styles.icon}>{rightIcon}</View> : null}
           </>
         )}
@@ -76,13 +74,13 @@ const SIZE_STYLES = {
       minHeight: 36,
       borderRadius: radii.md,
     },
-    label: {fontSize: fontSize.small, fontWeight: fontWeight.semibold},
+    label: {fontSize: fontSize.small, fontWeight: fontWeight.medium},
   },
   md: {
     container: {
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.lg,
-      minHeight: 44,
+      minHeight: 48,
       borderRadius: radii.md,
     },
     label: {fontSize: fontSize.body, fontWeight: fontWeight.semibold},
@@ -92,9 +90,9 @@ const SIZE_STYLES = {
       paddingVertical: spacing.lg,
       paddingHorizontal: spacing.xl,
       minHeight: 54,
-      borderRadius: radii.lg,
+      borderRadius: radii.md,
     },
-    label: {fontSize: fontSize.bodyLg, fontWeight: fontWeight.bold},
+    label: {fontSize: fontSize.bodyLg, fontWeight: fontWeight.semibold},
   },
 } as const;
 
@@ -103,13 +101,17 @@ const VARIANT_STYLES = {
     container: {backgroundColor: colors.primary},
     label: {color: colors.textOnPrimary},
   },
+  secondary: {
+    container: {backgroundColor: colors.primaryMuted},
+    label: {color: colors.text},
+  },
   accent: {
     container: {backgroundColor: colors.accent},
     label: {color: colors.textOnAccent},
   },
   ghost: {
     container: {backgroundColor: 'transparent'},
-    label: {color: colors.primary},
+    label: {color: colors.text},
   },
   outline: {
     container: {
@@ -135,5 +137,5 @@ const styles = StyleSheet.create({
   row: {flexDirection: 'row', alignItems: 'center', gap: spacing.sm},
   icon: {alignItems: 'center', justifyContent: 'center'},
   label: {textAlign: 'center'},
-  disabled: {opacity: 0.5},
+  disabled: {opacity: 0.4},
 });

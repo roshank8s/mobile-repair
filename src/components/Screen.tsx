@@ -7,27 +7,32 @@ type Props = {
   children: React.ReactNode;
   /** Defaults to ['top']. Pass [] to render no safe-area padding. */
   edges?: Edge[];
-  /** Defaults to 720; the inner container caps at this width and centers on wider devices. */
-  maxWidth?: number;
+  /**
+   * Cap the inner column width. Defaults to undefined (full width). Set to
+   * a smaller number (e.g. 560) for form screens so inputs don't sprawl.
+   */
+  maxContentWidth?: number;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
 };
 
-/**
- * Standard screen frame: SafeAreaView with the brand background and a
- * centered, width-capped content column. Phones render edge-to-edge; tablets
- * get a tidy ~720dp column instead of stretching cards across 1000+dp.
- */
 export const Screen: React.FC<Props> = ({
   children,
   edges = ['top'],
-  maxWidth = 720,
+  maxContentWidth,
   style,
   contentStyle,
 }) => {
   return (
     <SafeAreaView style={[styles.safe, style]} edges={edges}>
-      <View style={[styles.content, {maxWidth}, contentStyle]}>{children}</View>
+      <View
+        style={[
+          styles.content,
+          maxContentWidth ? {maxWidth: maxContentWidth} : null,
+          contentStyle,
+        ]}>
+        {children}
+      </View>
     </SafeAreaView>
   );
 };

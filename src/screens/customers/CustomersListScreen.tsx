@@ -2,20 +2,17 @@ import React, {useMemo, useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import Animated, {FadeIn} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
-import {ScreenHeader} from '../../components/ScreenHeader';
 import {Input} from '../../components/Input';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {Avatar} from '../../components/Avatar';
 import {EmptyState} from '../../components/EmptyState';
 import {FilterChips, type FilterChip} from '../../components/FilterChips';
-import {PhoneIcon, SearchIcon, WhatsAppIcon} from '../../components/icons';
-import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
+import {SearchIcon} from '../../components/icons';
+import {colors, fontSize, fontWeight, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
-import {formatINR} from '../../lib/currency';
 import {formatRelative} from '../../lib/date';
-import {callPhone, openWhatsApp} from '../../lib/whatsapp';
 import type {Customer, Job} from '../../data/types';
 import type {RootStackParamList} from '../../app/navigation/types';
 
@@ -23,7 +20,6 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Tab = 'all' | 'active' | 'frequent' | 'new';
 
 const FREQUENT_THRESHOLD = 3;
-const HIGH_VALUE_THRESHOLD = 10000;
 const NEW_DAYS = 30;
 const ACTIVE_STATUSES = new Set([
   'received',
@@ -81,8 +77,7 @@ export const CustomersListScreen: React.FC = () => {
     return {
       all: decorated.length,
       active: decorated.filter(d => d.stats.activeJobCount > 0).length,
-      frequent: decorated.filter(d => d.stats.jobCount >= FREQUENT_THRESHOLD)
-        .length,
+      frequent: decorated.filter(d => d.stats.jobCount >= FREQUENT_THRESHOLD).length,
       new: decorated.filter(
         d => new Date(d.customer.createdAt).getTime() > newCutoff,
       ).length,
@@ -128,167 +123,128 @@ export const CustomersListScreen: React.FC = () => {
 
   return (
     <Screen>
-      <ScreenHeader title="Customers" subtitle={`${customers.length} total`} />
+      <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Customers</Text>
+          <Text style={styles.subtitle}>{customers.length} total</Text>
+        </View>
 
-      <View style={styles.searchBox}>
-        <Input
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search by name or phone"
-          leftAdornment={<SearchIcon size={18} color={colors.textMuted} />}
-        />
-      </View>
-
-      <FilterChips
-        chips={chips}
-        activeKey={tab}
-        onChange={k => setTab(k as Tab)}
-      />
-
-      {filtered.length === 0 ? (
-        <View style={styles.flex}>
-          <EmptyState
-            kind="customers"
-            title={query || tab !== 'all' ? 'No matches' : 'No customers yet'}
-            message={
-              query || tab !== 'all'
-                ? 'Try a different keyword or tab.'
-                : 'Customers are added automatically when you create a job.'
-            }
+        <View style={styles.searchBox}>
+          <Input
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search by name or phone"
+            leftAdornment={<SearchIcon size={18} color={colors.textMuted} />}
           />
         </View>
-      ) : (
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}>
-          {filtered.map(({customer, stats}, i) => (
-            <CustomerCard
-              key={customer.id}
-              customer={customer}
-              stats={stats}
-              onPress={() =>
-                nav.navigate('CustomerDetail', {customerId: customer.id})
+
+        <FilterChips
+          chips={chips}
+          activeKey={tab}
+          onChange={k => setTab(k as Tab)}
+        />
+
+        {filtered.length === 0 ? (
+          <View style={styles.flex}>
+            <EmptyState
+              title={query || tab !== 'all' ? 'No matches' : 'No customers yet'}
+              message={
+                query || tab !== 'all'
+                  ? 'Try a different keyword or tab.'
+                  : 'Customers are added automatically when you create a job.'
               }
-              delay={i * 30}
             />
-          ))}
-          <View style={{height: spacing.huge}} />
-        </ScrollView>
-      )}
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.flex}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}>
+            {filtered.map(({customer, stats}) => (
+              <CustomerRow
+                key={customer.id}
+                customer={customer}
+                stats={stats}
+                onPress={() =>
+                  nav.navigate('CustomerDetail', {customerId: customer.id})
+                }
+              />
+            ))}
+            <View style={{height: spacing.huge}} />
+          </ScrollView>
+        )}
+      </Animated.View>
     </Screen>
   );
 };
 
-const CustomerCard: React.FC<{
+const CustomerRow: React.FC<{
   customer: Customer;
   stats: CustomerStats;
   onPress: () => void;
-  delay: number;
-}> = ({customer, stats, onPress, delay}) => {
-  const isFrequent = stats.jobCount >= FREQUENT_THRESHOLD;
-  const isHighValue = stats.lifetimeSpend >= HIGH_VALUE_THRESHOLD;
-
+}> = ({customer, stats, onPress}) => {
   return (
-    <Animated.View
-      entering={FadeInDown.duration(260).delay(delay).springify().damping(18)}>
-      <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
-        <Avatar
-          uri={customer.avatarUri}
-          fallback={initials(customer.name) || '?'}
-          size={48}
-        />
-
-        <View style={styles.middle}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>
-              {customer.name}
-            </Text>
-            {isHighValue ? (
-              <View style={[styles.tag, styles.tagHighValue]}>
-                <Text style={styles.tagTextHighValue}>VIP</Text>
-              </View>
-            ) : isFrequent ? (
-              <View style={[styles.tag, styles.tagFrequent]}>
-                <Text style={styles.tagTextFrequent}>Frequent</Text>
-              </View>
-            ) : null}
-          </View>
-          <Text style={styles.phone}>+91 {customer.phone}</Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {stats.jobCount} job{stats.jobCount === 1 ? '' : 's'}
-            {stats.activeJobCount > 0 ? (
-              <Text style={styles.metaActive}>
-                {' '}
-                · {stats.activeJobCount} active
-              </Text>
-            ) : null}
-            {stats.lastVisit
-              ? ` · last ${formatRelative(stats.lastVisit)}`
-              : ` · joined ${formatRelative(customer.createdAt)}`}
-          </Text>
-          {stats.lifetimeSpend > 0 ? (
-            <Text style={styles.spend}>
-              Spent {formatINR(stats.lifetimeSpend)}
-            </Text>
-          ) : null}
-        </View>
-
-        <View style={styles.actions}>
-          <AnimatedPressable
-            onPress={() => callPhone(customer.phone)}
-            style={[styles.actionBtn, styles.actionCall]}
-            scaleTo={0.9}>
-            <PhoneIcon size={18} color={colors.primary} />
-          </AnimatedPressable>
-          <AnimatedPressable
-            onPress={() =>
-              openWhatsApp(customer.phone, `Hi ${customer.name}!`)
-            }
-            style={[styles.actionBtn, styles.actionWa]}
-            scaleTo={0.9}>
-            <WhatsAppIcon size={18} color={colors.success} />
-          </AnimatedPressable>
-        </View>
-      </AnimatedPressable>
-    </Animated.View>
+    <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
+      <Avatar
+        uri={customer.avatarUri}
+        fallback={initials(customer.name) || '?'}
+        seed={customer.id}
+        size={44}
+      />
+      <View style={styles.middle}>
+        <Text style={styles.name} numberOfLines={1}>
+          {customer.name}
+        </Text>
+        <Text style={styles.phone} numberOfLines={1}>
+          +91 {customer.phone}
+        </Text>
+      </View>
+      <View style={styles.right}>
+        {stats.activeJobCount > 0 ? (
+          <Text style={styles.activeMark}>{stats.activeJobCount} active</Text>
+        ) : stats.lastVisit ? (
+          <Text style={styles.last}>{formatRelative(stats.lastVisit)}</Text>
+        ) : (
+          <Text style={styles.last}>New</Text>
+        )}
+      </View>
+    </AnimatedPressable>
   );
 };
 
 const styles = StyleSheet.create({
   flex: {flex: 1},
-  searchBox: {paddingHorizontal: spacing.lg, marginBottom: spacing.sm},
-  list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
+  header: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  title: {
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    marginTop: 4,
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+  },
+  searchBox: {paddingHorizontal: spacing.xl, marginBottom: spacing.sm},
+  list: {paddingHorizontal: spacing.xl},
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.md,
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radii.lg,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primaryMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: fontSize.bodyLg,
-    fontWeight: fontWeight.bold,
-    color: colors.primary,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   middle: {flex: 1, minWidth: 0},
-  nameRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.sm},
   name: {
     fontSize: fontSize.bodyLg,
-    fontWeight: fontWeight.bold,
+    fontWeight: fontWeight.medium,
     color: colors.text,
-    flexShrink: 1,
   },
   phone: {
     fontSize: fontSize.small,
@@ -296,42 +252,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontVariant: ['tabular-nums'],
   },
-  meta: {fontSize: fontSize.caption, color: colors.textSubtle, marginTop: 4},
-  metaActive: {color: colors.warning, fontWeight: fontWeight.bold},
-  spend: {
+  right: {alignItems: 'flex-end'},
+  activeMark: {
     fontSize: fontSize.caption,
-    color: colors.success,
-    fontWeight: fontWeight.semibold,
-    marginTop: 2,
-    fontVariant: ['tabular-nums'],
+    color: colors.brand,
+    fontWeight: fontWeight.medium,
   },
-  actions: {flexDirection: 'row', gap: spacing.sm},
-  actionBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionCall: {backgroundColor: colors.primaryMuted},
-  actionWa: {backgroundColor: colors.successSoft},
-  tag: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radii.pill,
-  },
-  tagFrequent: {backgroundColor: colors.warningSoft},
-  tagTextFrequent: {
+  last: {
     fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: '#92400E',
-    letterSpacing: 0.3,
-  },
-  tagHighValue: {backgroundColor: colors.accent},
-  tagTextHighValue: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: colors.textOnAccent,
-    letterSpacing: 0.5,
+    color: colors.textSubtle,
   },
 });

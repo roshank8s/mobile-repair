@@ -15,7 +15,7 @@ const App: React.FC = () => {
       <SafeAreaProvider>
         <ThemeProvider>
           <ToastProvider>
-            <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+            <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
             <AppBoot />
           </ToastProvider>
         </ThemeProvider>

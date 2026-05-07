@@ -1,7 +1,6 @@
 import React from 'react';
 import {StyleProp, StyleSheet, Text, View, ViewStyle} from 'react-native';
 import {AnimatedPressable} from './AnimatedPressable';
-import {ChevronRightIcon} from './icons';
 import {colors, fontSize, fontWeight, spacing} from '../theme/tokens';
 
 type Props = {
@@ -12,10 +11,6 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
-/**
- * Section title row with an optional inline action ("See all", "Manage"...).
- * Used between hero / stat blocks and lists on the Dashboard and elsewhere.
- */
 export const SectionHeader: React.FC<Props> = ({
   title,
   caption,
@@ -33,9 +28,8 @@ export const SectionHeader: React.FC<Props> = ({
         <AnimatedPressable
           onPress={onAction}
           style={styles.action}
-          scaleTo={0.95}>
+          scaleTo={0.96}>
           <Text style={styles.actionLabel}>{actionLabel}</Text>
-          <ChevronRightIcon size={14} color={colors.accent} strokeWidth={2.4} />
         </AnimatedPressable>
       ) : null}
     </View>
@@ -53,26 +47,22 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   title: {
     fontSize: fontSize.subhead,
-    fontWeight: fontWeight.bold,
-    color: colors.textOnBg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   caption: {
     fontSize: fontSize.caption,
-    color: colors.textOnBgSubtle,
+    color: colors.textMuted,
     marginTop: 2,
   },
   action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
-    borderRadius: 999,
   },
   actionLabel: {
     fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-    color: colors.accent,
-    letterSpacing: 0.2,
+    fontWeight: fontWeight.medium,
+    color: colors.textMuted,
+    letterSpacing: 0.1,
   },
 });

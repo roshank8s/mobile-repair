@@ -74,14 +74,14 @@ const styles = StyleSheet.create({
   wrap: {gap: spacing.xs},
   label: {
     fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
+    fontWeight: fontWeight.medium,
     color: colors.textMuted,
     marginBottom: 2,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.bgRaised,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.md,
@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
   },
   inputRowFocused: {
     borderColor: colors.primary,
+    borderWidth: 1.5,
   },
   inputRowError: {
     borderColor: colors.danger,

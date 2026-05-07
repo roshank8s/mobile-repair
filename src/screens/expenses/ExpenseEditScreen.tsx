@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   footer: {
     padding: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.borderOnBg,
-    backgroundColor: colors.bgRaised,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
   },
 });

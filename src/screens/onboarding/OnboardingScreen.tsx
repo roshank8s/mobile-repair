@@ -217,14 +217,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize.display,
-    fontWeight: fontWeight.bold,
-    color: colors.textOnBg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.xs,
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: fontSize.body,
-    color: colors.textOnBgMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
     lineHeight: 22,

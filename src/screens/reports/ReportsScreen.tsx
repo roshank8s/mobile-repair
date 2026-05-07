@@ -2,15 +2,13 @@ import React, {useMemo, useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import Animated, {FadeInDown, FadeInUp} from 'react-native-reanimated';
+import Animated, {FadeIn} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
-import {Hero} from '../../components/Hero';
 import {MoneyText} from '../../components/MoneyText';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {Avatar} from '../../components/Avatar';
-import {SectionHeader} from '../../components/SectionHeader';
-import {colors, fontSize, fontWeight, radii, shadows, spacing} from '../../theme/tokens';
+import {colors, fontSize, fontWeight, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
 import {formatINR} from '../../lib/currency';
 import type {RootStackParamList} from '../../app/navigation/types';
@@ -32,14 +30,13 @@ const cutoffMs = (range: Range): number => {
     start.setDate(start.getDate() - 6);
     return start.getTime();
   }
-  // month
   return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 };
 
 const RANGE_LABEL: Record<Range, string> = {
   today: 'Today',
-  week: 'Last 7 days',
-  month: 'This month',
+  week: '7 days',
+  month: 'Month',
 };
 
 const ISSUE_KEYWORDS: {tag: string; tests: RegExp[]}[] = [
@@ -83,7 +80,6 @@ export const ReportsScreen: React.FC = () => {
     const jobCount = rangeJobs.length;
     const completedCount = rangeJobs.filter(j => j.status === 'delivered').length;
 
-    // Top repair tags
     const tagCounts: Record<string, number> = {};
     rangeJobs.forEach(j => {
       const tag = tagIssue(j.issue);
@@ -93,7 +89,6 @@ export const ReportsScreen: React.FC = () => {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
-    // Top customers by spend
     const spendByCust: Record<string, number> = {};
     rangePayments.forEach(p => {
       const job = jobs.find(j => j.id === p.jobId);
@@ -113,7 +108,6 @@ export const ReportsScreen: React.FC = () => {
       amount: number;
     }[];
 
-    // Payment mode split
     const modeSplit: Record<string, number> = {};
     rangePayments.forEach(p => {
       modeSplit[p.mode] = (modeSplit[p.mode] ?? 0) + p.amount;
@@ -128,379 +122,297 @@ export const ReportsScreen: React.FC = () => {
       topRepairs,
       topCustomers,
       modeSplit,
-      hasData: rangePayments.length + rangeExpenses.length + rangeJobs.length > 0,
     };
   }, [range, jobs, customers, payments, expenses]);
 
   return (
     <Screen>
-      <ScreenHeader
-        title="Reports"
-        subtitle="Earnings, expenses & insights"
-        onBack={() => nav.goBack()}
-      />
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}>
-        {/* Range chips */}
-        <View style={styles.rangeRow}>
-          {(['today', 'week', 'month'] as Range[]).map(r => (
-            <AnimatedPressable
-              key={r}
-              onPress={() => setRange(r)}
-              style={[styles.rangeChip, range === r && styles.rangeChipActive]}
-              scaleTo={0.95}>
-              <Text
-                style={[
-                  styles.rangeChipLabel,
-                  range === r && styles.rangeChipLabelActive,
-                ]}>
-                {RANGE_LABEL[r]}
-              </Text>
-            </AnimatedPressable>
-          ))}
-        </View>
+      <ScreenHeader title="Reports" onBack={() => nav.goBack()} />
+      <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.rangeRow}>
+            {(['today', 'week', 'month'] as Range[]).map(r => (
+              <AnimatedPressable
+                key={r}
+                onPress={() => setRange(r)}
+                style={[styles.rangeChip, range === r && styles.rangeChipActive]}
+                scaleTo={0.96}>
+                <Text
+                  style={[
+                    styles.rangeChipLabel,
+                    range === r && styles.rangeChipLabelActive,
+                  ]}>
+                  {RANGE_LABEL[r]}
+                </Text>
+              </AnimatedPressable>
+            ))}
+          </View>
 
-        {/* Hero net profit */}
-        <Animated.View
-          entering={FadeInUp.duration(360).springify().damping(18)}
-          style={styles.heroWrap}>
-          <Hero style={styles.hero}>
-            <Text style={styles.heroLabel}>Net profit · {RANGE_LABEL[range]}</Text>
+          <View style={styles.heroBlock}>
+            <Text style={styles.heroLabel}>Net profit</Text>
             <MoneyText
               value={data.profit}
               size="xl"
+              animate={false}
               style={[
                 styles.heroMoney,
-                data.profit < 0 && {color: '#FCA5A5'},
+                data.profit < 0 && {color: colors.danger},
               ]}
             />
-            <View style={styles.heroPills}>
-              <View style={styles.heroPill}>
-                <Text style={styles.heroPillLabel}>Revenue</Text>
-                <MoneyText
-                  value={data.revenue}
-                  size="sm"
-                  style={styles.heroPillValue}
-                />
+            <View style={styles.subRow}>
+              <View style={styles.subCell}>
+                <Text style={styles.subLabel}>Revenue</Text>
+                <Text style={styles.subValue}>{formatINR(data.revenue)}</Text>
               </View>
-              <View style={styles.heroPill}>
-                <Text style={styles.heroPillLabel}>Expenses</Text>
-                <MoneyText
-                  value={data.exp}
-                  size="sm"
-                  style={styles.heroPillValue}
-                />
+              <View style={styles.subDivider} />
+              <View style={styles.subCell}>
+                <Text style={styles.subLabel}>Expenses</Text>
+                <Text style={styles.subValue}>{formatINR(data.exp)}</Text>
               </View>
             </View>
-          </Hero>
-        </Animated.View>
+          </View>
 
-        {/* Stat tiles */}
-        <View style={styles.statsRow}>
-          <StatTile label="Jobs in range" value={String(data.jobCount)} delay={120} />
-          <StatTile
-            label="Delivered"
-            value={String(data.completedCount)}
-            accent={colors.success}
-            delay={180}
-          />
-        </View>
+          <View style={styles.statsRow}>
+            <StatCell label="Jobs" value={String(data.jobCount)} />
+            <View style={styles.statDivider} />
+            <StatCell label="Delivered" value={String(data.completedCount)} />
+          </View>
 
-        {/* Top repairs */}
-        <SectionHeader
-          title="Most common repairs"
-          caption={
-            data.topRepairs.length > 0
-              ? `${data.topRepairs.length} categories`
-              : 'No repairs in this range'
-          }
-        />
-        {data.topRepairs.length > 0 ? (
-          <View style={styles.list}>
-            {data.topRepairs.map(([tag, count], i) => {
-              const max = data.topRepairs[0][1];
-              const pct = Math.max(10, Math.round((count / max) * 100));
-              return (
-                <Animated.View
-                  key={tag}
-                  entering={FadeInDown.duration(260)
-                    .delay(i * 40)
-                    .springify()
-                    .damping(18)}>
-                  <View style={styles.barRow}>
+          <Text style={styles.sectionTitle}>Most common repairs</Text>
+          {data.topRepairs.length > 0 ? (
+            <View style={styles.barList}>
+              {data.topRepairs.map(([tag, count]) => {
+                const max = data.topRepairs[0][1];
+                const pct = Math.max(8, Math.round((count / max) * 100));
+                return (
+                  <View key={tag} style={styles.barRow}>
                     <Text style={styles.barLabel}>{tag}</Text>
                     <View style={styles.barTrack}>
-                      <View
-                        style={[
-                          styles.barFill,
-                          {width: `${pct}%`},
-                        ]}
-                      />
+                      <View style={[styles.barFill, {width: `${pct}%`}]} />
                     </View>
                     <Text style={styles.barCount}>{count}</Text>
                   </View>
-                </Animated.View>
-              );
-            })}
-          </View>
-        ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyMsg}>
-              Repair patterns will show here as you log jobs.
-            </Text>
-          </View>
-        )}
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.empty}>No repairs in range.</Text>
+          )}
 
-        {/* Top customers */}
-        <SectionHeader
-          title="Top customers"
-          caption={
-            data.topCustomers.length > 0
-              ? `By spend in ${RANGE_LABEL[range].toLowerCase()}`
-              : 'No payments in this range'
-          }
-        />
-        {data.topCustomers.length > 0 ? (
-          <View style={styles.list}>
-            {data.topCustomers.map(({customer, amount}, i) => (
-              <Animated.View
-                key={customer.id}
-                entering={FadeInDown.duration(260)
-                  .delay(i * 40)
-                  .springify()
-                  .damping(18)}>
-                <View style={styles.custRow}>
+          <Text style={styles.sectionTitle}>Top customers</Text>
+          {data.topCustomers.length > 0 ? (
+            <View style={styles.list}>
+              {data.topCustomers.map(({customer, amount}) => (
+                <View key={customer.id} style={styles.custRow}>
                   <Avatar
                     uri={customer.avatarUri}
                     fallback={customer.name
                       .split(' ')
                       .map(p => p[0] ?? '')
                       .join('')}
-                    size={40}
+                    seed={customer.id}
+                    size={36}
                   />
                   <View style={styles.flex}>
-                    <Text style={styles.custName}>{customer.name}</Text>
+                    <Text style={styles.custName} numberOfLines={1}>
+                      {customer.name}
+                    </Text>
                     <Text style={styles.custPhone}>+91 {customer.phone}</Text>
                   </View>
-                  <MoneyText value={amount} size="sm" />
-                </View>
-              </Animated.View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyMsg}>
-              Once payments land you'll see your highest-spend customers here.
-            </Text>
-          </View>
-        )}
-
-        {/* Payment mode split */}
-        {Object.keys(data.modeSplit).length > 0 ? (
-          <>
-            <SectionHeader
-              title="Payment mode mix"
-              caption={`${RANGE_LABEL[range]} revenue by mode`}
-            />
-            <View style={styles.list}>
-              {(['cash', 'upi', 'card'] as const).map(m => (
-                <View key={m} style={styles.modeRow}>
-                  <Text style={styles.modeLabel}>{m.toUpperCase()}</Text>
-                  <Text style={styles.modeAmount}>
-                    {formatINR(data.modeSplit[m] ?? 0)}
-                  </Text>
+                  <Text style={styles.custAmount}>{formatINR(amount)}</Text>
                 </View>
               ))}
             </View>
-          </>
-        ) : null}
+          ) : (
+            <Text style={styles.empty}>No payments in range.</Text>
+          )}
 
-        <View style={{height: spacing.huge}} />
-      </ScrollView>
+          {Object.keys(data.modeSplit).length > 0 ? (
+            <>
+              <Text style={styles.sectionTitle}>Payment modes</Text>
+              <View style={styles.list}>
+                {(['cash', 'upi', 'card'] as const).map(m => (
+                  <View key={m} style={styles.modeRow}>
+                    <Text style={styles.modeLabel}>{m.toUpperCase()}</Text>
+                    <Text style={styles.modeAmount}>
+                      {formatINR(data.modeSplit[m] ?? 0)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          ) : null}
+
+          <View style={{height: spacing.huge}} />
+        </ScrollView>
+      </Animated.View>
     </Screen>
   );
 };
 
-const StatTile: React.FC<{
-  label: string;
-  value: string;
-  accent?: string;
-  delay: number;
-}> = ({label, value, accent = colors.primary, delay}) => (
-  <Animated.View
-    entering={FadeInDown.duration(360).delay(delay).springify().damping(18)}
-    style={styles.statTile}>
-    <View style={[styles.statBar, {backgroundColor: accent}]} />
-    <View style={styles.flex}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
-  </Animated.View>
+const StatCell: React.FC<{label: string; value: string}> = ({label, value}) => (
+  <View style={styles.statCell}>
+    <Text style={styles.statLabel}>{label}</Text>
+    <Text style={styles.statValue}>{value}</Text>
+  </View>
 );
 
 const styles = StyleSheet.create({
-  flex: {flex: 1, minWidth: 0},
+  flex: {flex: 1},
   scroll: {paddingBottom: spacing.huge},
+
   rangeRow: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     gap: spacing.sm,
-    marginBottom: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   rangeChip: {
     flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 10,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: colors.borderOnBg,
+    borderColor: colors.border,
     alignItems: 'center',
   },
   rangeChipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   rangeChipLabel: {
     fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-    color: colors.textOnBgMuted,
+    fontWeight: fontWeight.medium,
+    color: colors.textMuted,
   },
-  rangeChipLabelActive: {color: colors.textOnAccent},
+  rangeChipLabelActive: {color: colors.textOnPrimary},
 
-  // Hero
-  heroWrap: {paddingHorizontal: spacing.lg, marginBottom: spacing.md},
-  hero: {padding: spacing.xl},
+  heroBlock: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
+  },
   heroLabel: {
-    color: '#C7D2FE',
     fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
+    color: colors.textMuted,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  heroMoney: {
+    color: colors.text,
+    fontSize: fontSize.hero,
+    fontWeight: fontWeight.semibold,
+  },
+  subRow: {
+    flexDirection: 'row',
+    marginTop: spacing.lg,
+    gap: spacing.lg,
+  },
+  subDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+  },
+  subCell: {flex: 1, gap: 2},
+  subLabel: {
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+    fontWeight: fontWeight.medium,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginBottom: spacing.xs,
   },
-  heroMoney: {color: '#FFFFFF'},
-  heroPills: {flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg},
-  heroPill: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderColor: 'rgba(255,255,255,0.18)',
-    borderWidth: 1,
-    borderRadius: radii.md,
-    padding: spacing.md,
+  subValue: {
+    fontSize: fontSize.subhead,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+    fontVariant: ['tabular-nums'],
   },
-  heroPillLabel: {
-    color: '#C7D2FE',
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.semibold,
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-  heroPillValue: {color: '#FFFFFF'},
 
-  // Stats
   statsRow: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    gap: spacing.md,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  statTile: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.card,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    paddingLeft: 0,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    minHeight: 78,
-    ...shadows.card,
+  statDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.lg,
   },
-  statBar: {width: 4, alignSelf: 'stretch', marginRight: spacing.md},
+  statCell: {flex: 1, gap: 4},
   statLabel: {
-    fontSize: fontSize.small,
+    fontSize: fontSize.caption,
     color: colors.textMuted,
-    fontWeight: fontWeight.semibold,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   statValue: {
-    fontSize: fontSize.title,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.display,
     color: colors.text,
+    fontWeight: fontWeight.semibold,
     fontVariant: ['tabular-nums'],
-    marginTop: 2,
   },
 
-  // Generic list
-  list: {paddingHorizontal: spacing.lg, gap: spacing.sm},
-  emptyCard: {
-    marginHorizontal: spacing.lg,
-    padding: spacing.lg,
-    backgroundColor: colors.card,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+  sectionTitle: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.md,
+    fontSize: fontSize.subhead,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
-  emptyMsg: {fontSize: fontSize.small, color: colors.textMuted, textAlign: 'center'},
 
-  // Bar chart row
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
+  barList: {paddingHorizontal: spacing.xl, gap: spacing.md},
+  barRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.md},
   barLabel: {
     width: 96,
     fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
     color: colors.text,
+    fontWeight: fontWeight.medium,
   },
   barTrack: {
     flex: 1,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.cardMuted,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primaryMuted,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
     backgroundColor: colors.primary,
-    borderRadius: 4,
   },
   barCount: {
     width: 24,
     textAlign: 'right',
     fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textMuted,
     fontVariant: ['tabular-nums'],
   },
 
-  // Customer
+  list: {paddingHorizontal: spacing.xl},
+  empty: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+  },
+
   custRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.md,
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radii.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   custName: {
     fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
     color: colors.text,
+    fontWeight: fontWeight.medium,
   },
   custPhone: {
     fontSize: fontSize.caption,
@@ -508,29 +420,31 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontVariant: ['tabular-nums'],
   },
+  custAmount: {
+    fontSize: fontSize.body,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+    fontVariant: ['tabular-nums'],
+  },
 
-  // Mode mix
   modeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radii.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   modeLabel: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.medium,
     color: colors.textMuted,
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   modeAmount: {
     fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
     color: colors.text,
+    fontWeight: fontWeight.medium,
     fontVariant: ['tabular-nums'],
   },
 });

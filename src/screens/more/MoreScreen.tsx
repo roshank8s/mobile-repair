@@ -1,31 +1,15 @@
-import React, {useMemo} from 'react';
+import React from 'react';
 import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {useNavigation, CommonActions} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import Animated, {FadeIn} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {Avatar} from '../../components/Avatar';
-import {Hero} from '../../components/Hero';
-import {MoneyText} from '../../components/MoneyText';
-import {
-  BarChartIcon,
-  ChevronRightIcon,
-  CoinsIcon,
-  HelpIcon,
-  LogOutIcon,
-  PercentIcon,
-  PlusIcon,
-  ReceiptIcon,
-  SettingsIcon,
-  StoreIcon,
-  UsersIcon,
-  WhatsAppIcon,
-} from '../../components/icons';
-import {colors, fontSize, fontWeight, radii, shadows, spacing} from '../../theme/tokens';
+import {ChevronRightIcon} from '../../components/icons';
+import {colors, fontSize, fontWeight, spacing} from '../../theme/tokens';
 import {resetAll, useStoreState} from '../../data/store';
-import {isToday} from '../../lib/date';
 import {useToast} from '../../components/Toast';
 import type {RootStackParamList} from '../../app/navigation/types';
 
@@ -41,25 +25,7 @@ const initials = (name: string) =>
 export const MoreScreen: React.FC = () => {
   const nav = useNavigation<Nav>();
   const shop = useStoreState(s => s.shop);
-  const jobs = useStoreState(s => s.jobs);
-  const payments = useStoreState(s => s.payments);
   const toast = useToast();
-
-  const stats = useMemo(() => {
-    const totalJobs = jobs.length;
-    const todayRevenue = payments
-      .filter(p => isToday(p.at))
-      .reduce((sum, p) => sum + p.amount, 0);
-    return {totalJobs, todayRevenue};
-  }, [jobs, payments]);
-
-  const goToTab = (tabName: 'Dashboard' | 'Jobs' | 'Customers' | 'Inventory') =>
-    nav.dispatch(
-      CommonActions.navigate({
-        name: 'AppTabs',
-        params: {screen: tabName},
-      }),
-    );
 
   const onHelp = () => {
     Alert.alert(
@@ -69,7 +35,7 @@ export const MoreScreen: React.FC = () => {
     );
   };
 
-  const onLogout = () => {
+  const onReset = () => {
     Alert.alert(
       'Reset shop data?',
       'This wipes all jobs, customers, parts, invoices, and shop settings. Cannot be undone.',
@@ -90,403 +56,192 @@ export const MoreScreen: React.FC = () => {
   return (
     <Screen>
       <ScreenHeader title="More" />
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}>
-        {/* Profile card */}
-        <Animated.View entering={FadeInDown.duration(300).springify().damping(18)}>
-          <Hero style={styles.profileCard}>
-            <View style={styles.profileTop}>
-              <Avatar
-                uri={shop.logoUri ?? shop.ownerAvatarUri}
-                fallback={initials(shop.name)}
-                size={56}
-                background={colors.accent}
-                textColor={colors.textOnAccent}
-              />
-              <View style={styles.profileInfo}>
-                <Text style={styles.shopName} numberOfLines={1}>
-                  {shop.name || 'Repair Shop'}
-                </Text>
-                <Text style={styles.shopRole}>
-                  {shop.ownerName || 'Owner'} · Owner
-                </Text>
-                {shop.gstin ? (
-                  <Text style={styles.shopGstin}>GSTIN {shop.gstin}</Text>
-                ) : null}
-              </View>
-            </View>
+      <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.profile}>
+            <Avatar
+              uri={shop.logoUri ?? shop.ownerAvatarUri}
+              fallback={initials(shop.name)}
+              size={64}
+              background={colors.brand}
+              textColor={colors.textOnPrimary}
+            />
+            <Text style={styles.shopName} numberOfLines={1}>
+              {shop.name || 'Repair Shop'}
+            </Text>
+            <Text style={styles.ownerName}>
+              {shop.ownerName || 'Owner'}
+            </Text>
+            {shop.gstin ? (
+              <Text style={styles.gstin}>GSTIN {shop.gstin}</Text>
+            ) : null}
+          </View>
 
-            <View style={styles.profileStatsRow}>
-              <View style={styles.profileStat}>
-                <Text style={styles.profileStatLabel}>Total jobs</Text>
-                <Text style={styles.profileStatValue}>{stats.totalJobs}</Text>
-              </View>
-              <View style={styles.profileDivider} />
-              <View style={styles.profileStat}>
-                <Text style={styles.profileStatLabel}>Today's revenue</Text>
-                <MoneyText
-                  value={stats.todayRevenue}
-                  size="md"
-                  style={styles.profileStatMoney}
-                />
-              </View>
-            </View>
-          </Hero>
-        </Animated.View>
+          <Group title="Business">
+            <Row
+              title="Reports"
+              sub="Earnings, profit, top repairs"
+              onPress={() => nav.navigate('Reports')}
+            />
+            <Row
+              title="Expenses"
+              sub="Rent, parts, utilities"
+              onPress={() => nav.navigate('ExpensesList')}
+            />
+            <Row
+              title="Invoices"
+              sub="Past GST invoices"
+              onPress={() => nav.navigate('InvoicesList')}
+            />
+            <Row
+              title="GST & Tax"
+              sub={
+                shop.gstin
+                  ? `${shop.gstRatePct}% default · GSTIN configured`
+                  : `${shop.gstRatePct}% default · no GSTIN`
+              }
+              onPress={() => nav.navigate('Settings')}
+            />
+          </Group>
 
-        {/* Quick actions */}
-        <Animated.View
-          entering={FadeInDown.duration(300).delay(60).springify().damping(18)}
-          style={styles.quickActionsRow}>
-          <QuickAction
-            icon={ReceiptIcon}
-            label="Create Invoice"
-            color={colors.primary}
-            bg={colors.primaryMuted}
-            onPress={() => goToTab('Jobs')}
-          />
-          <QuickAction
-            icon={PlusIcon}
-            label="Add Technician"
-            color={colors.success}
-            bg={colors.successSoft}
-            onPress={() => nav.navigate('Settings')}
-          />
-          <QuickAction
-            icon={BarChartIcon}
-            label="View Reports"
-            color={colors.accent}
-            bg={colors.accentSoft}
-            onPress={() => nav.navigate('Reports')}
-          />
-        </Animated.View>
+          <Group title="Shop">
+            <Row
+              title="Shop info"
+              sub={shop.address ?? 'Address, phone, owner'}
+              onPress={() => nav.navigate('Settings')}
+            />
+            <Row
+              title="Technicians"
+              sub="Manage your team"
+              onPress={() => nav.navigate('Settings')}
+            />
+          </Group>
 
-        {/* Sections */}
-        <Section title="Business" delay={120}>
-          <Row
-            icon={BarChartIcon}
-            iconBg={colors.accentSoft}
-            iconColor={colors.accent}
-            title="Reports & insights"
-            sub="Earnings, profit, top repairs"
-            onPress={() => nav.navigate('Reports')}
-          />
-          <Row
-            icon={CoinsIcon}
-            iconBg={colors.dangerSoft}
-            iconColor={colors.danger}
-            title="Expenses"
-            sub="Rent, parts, utilities, staff"
-            onPress={() => nav.navigate('ExpensesList')}
-          />
-          <Row
-            icon={ReceiptIcon}
-            iconBg={colors.primaryMuted}
-            iconColor={colors.primary}
-            title="Invoices"
-            sub="Past GST invoices"
-            onPress={() => nav.navigate('InvoicesList')}
-          />
-          <Row
-            icon={PercentIcon}
-            iconBg={colors.warningSoft}
-            iconColor={colors.warning}
-            title="GST & Tax"
-            sub={
-              shop.gstin
-                ? `${shop.gstRatePct}% default · GSTIN configured`
-                : `${shop.gstRatePct}% default · no GSTIN`
-            }
-            onPress={() => nav.navigate('Settings')}
-          />
-        </Section>
+          <Group title="App">
+            <Row
+              title="Settings"
+              sub="All preferences"
+              onPress={() => nav.navigate('Settings')}
+            />
+            <Row title="Help & support" sub="Get in touch" onPress={onHelp} />
+            <Row
+              title="Reset all data"
+              sub="Wipe shop and start over"
+              danger
+              onPress={onReset}
+            />
+          </Group>
 
-        <Section title="Management" delay={180}>
-          <Row
-            icon={UsersIcon}
-            iconBg={colors.successSoft}
-            iconColor={colors.success}
-            title="Technicians"
-            sub="Manage your team"
-            onPress={() => nav.navigate('Settings')}
-          />
-          <Row
-            icon={StoreIcon}
-            iconBg={colors.infoSoft}
-            iconColor={colors.info}
-            title="Shop Info"
-            sub={shop.address ?? 'Address, phone, owner'}
-            onPress={() => nav.navigate('Settings')}
-          />
-        </Section>
-
-        <Section title="App" delay={240}>
-          <Row
-            icon={SettingsIcon}
-            iconBg={colors.cardMuted}
-            iconColor={colors.text}
-            title="Settings"
-            sub="All preferences"
-            onPress={() => nav.navigate('Settings')}
-          />
-          <Row
-            icon={HelpIcon}
-            iconBg={colors.infoSoft}
-            iconColor={colors.info}
-            title="Help & Support"
-            sub="Get in touch"
-            rightIcon={
-              <View style={styles.waBadge}>
-                <WhatsAppIcon size={14} color={colors.success} />
-              </View>
-            }
-            onPress={onHelp}
-          />
-          <Row
-            icon={LogOutIcon}
-            iconBg={colors.dangerSoft}
-            iconColor={colors.danger}
-            title="Reset all data"
-            sub="Wipe shop and start over"
-            danger
-            onPress={onLogout}
-          />
-        </Section>
-
-        <Text style={styles.versionText}>Repair Shop · v1.0</Text>
-        <View style={{height: spacing.huge}} />
-      </ScrollView>
+          <Text style={styles.version}>Repair Shop · v1.0</Text>
+          <View style={{height: spacing.huge}} />
+        </ScrollView>
+      </Animated.View>
     </Screen>
   );
 };
 
-const QuickAction: React.FC<{
-  icon: React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
-  label: string;
-  color: string;
-  bg: string;
-  onPress: () => void;
-}> = ({icon: Icon, label, color, bg, onPress}) => (
-  <AnimatedPressable
-    onPress={onPress}
-    style={[styles.quickAction, {backgroundColor: colors.card}]}
-    scaleTo={0.97}>
-    <View style={[styles.quickActionIcon, {backgroundColor: bg}]}>
-      <Icon size={22} color={color} strokeWidth={2.2} />
-    </View>
-    <Text style={styles.quickActionLabel} numberOfLines={2}>
-      {label}
-    </Text>
-  </AnimatedPressable>
-);
-
-const Section: React.FC<{
+const Group: React.FC<{
   title: string;
-  delay: number;
   children: React.ReactNode;
-}> = ({title, delay, children}) => (
-  <Animated.View
-    entering={FadeInDown.duration(300).delay(delay).springify().damping(18)}
-    style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionGroup}>{children}</View>
-  </Animated.View>
+}> = ({title, children}) => (
+  <View style={styles.group}>
+    <Text style={styles.groupTitle}>{title}</Text>
+    <View style={styles.groupBody}>{children}</View>
+  </View>
 );
 
 const Row: React.FC<{
-  icon: React.ComponentType<{size?: number; color?: string; strokeWidth?: number}>;
-  iconBg: string;
-  iconColor: string;
   title: string;
-  sub: string;
+  sub?: string;
   onPress: () => void;
   danger?: boolean;
-  rightIcon?: React.ReactNode;
-}> = ({icon: Icon, iconBg, iconColor, title, sub, onPress, danger, rightIcon}) => (
+}> = ({title, sub, onPress, danger}) => (
   <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
-    <View style={[styles.rowIcon, {backgroundColor: iconBg}]}>
-      <Icon size={20} color={iconColor} strokeWidth={2.2} />
-    </View>
     <View style={styles.rowText}>
       <Text style={[styles.rowTitle, danger && {color: colors.danger}]}>
         {title}
       </Text>
-      <Text style={styles.rowSub} numberOfLines={1}>
-        {sub}
-      </Text>
+      {sub ? (
+        <Text style={styles.rowSub} numberOfLines={1}>
+          {sub}
+        </Text>
+      ) : null}
     </View>
-    {rightIcon ?? <ChevronRightIcon size={20} color={colors.textSubtle} />}
+    <ChevronRightIcon size={18} color={colors.textSubtle} strokeWidth={1.8} />
   </AnimatedPressable>
 );
 
 const styles = StyleSheet.create({
-  scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
+  flex: {flex: 1},
+  scroll: {paddingBottom: spacing.huge},
 
-  // Profile
-  profileCard: {
-    padding: spacing.xl,
-    marginBottom: spacing.lg,
-  },
-  profileTop: {
-    flexDirection: 'row',
+  profile: {
+    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
-    gap: spacing.md,
   },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: fontSize.subhead,
-    fontWeight: fontWeight.black,
-    color: colors.textOnAccent,
-    letterSpacing: 1,
-  },
-  profileInfo: {flex: 1, minWidth: 0},
   shopName: {
-    fontSize: fontSize.title,
-    fontWeight: fontWeight.bold,
-    color: colors.textOnPrimary,
-  },
-  shopRole: {
-    fontSize: fontSize.small,
-    color: '#C7D2FE',
-    marginTop: 2,
+    marginTop: spacing.md,
+    fontSize: fontSize.subhead,
     fontWeight: fontWeight.semibold,
-  },
-  shopGstin: {
-    fontSize: fontSize.caption,
-    color: '#A5B4FC',
-    marginTop: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  profileStatsRow: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radii.lg,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-  },
-  profileStat: {flex: 1, alignItems: 'flex-start'},
-  profileDivider: {
-    width: 1,
-    alignSelf: 'stretch',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    marginHorizontal: spacing.md,
-  },
-  profileStatLabel: {
-    fontSize: fontSize.caption,
-    color: '#C7D2FE',
-    fontWeight: fontWeight.semibold,
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  profileStatValue: {
-    fontSize: fontSize.title,
-    fontWeight: fontWeight.bold,
-    color: colors.textOnPrimary,
-    marginTop: 4,
-    fontVariant: ['tabular-nums'],
-  },
-  profileStatMoney: {
-    color: colors.textOnPrimary,
-    marginTop: 4,
-  },
-
-  // Quick actions
-  quickActionsRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  quickAction: {
-    flex: 1,
-    minHeight: 100,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    ...shadows.card,
-  },
-  quickActionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionLabel: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
     color: colors.text,
-    textAlign: 'center',
-    letterSpacing: 0.2,
+  },
+  ownerName: {
+    marginTop: 2,
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+  },
+  gstin: {
+    marginTop: 4,
+    fontSize: fontSize.caption,
+    color: colors.textSubtle,
+    fontVariant: ['tabular-nums'],
   },
 
-  // Sections
-  section: {marginTop: spacing.lg},
-  sectionTitle: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: spacing.sm,
-    marginLeft: spacing.xs,
+  group: {
+    marginTop: spacing.xxl,
   },
-  sectionGroup: {
-    backgroundColor: colors.card,
-    borderRadius: radii.lg,
-    borderWidth: 1,
+  groupTitle: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.sm,
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  groupBody: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
     borderColor: colors.border,
-    overflow: 'hidden',
+    backgroundColor: colors.card,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
-    minHeight: 64,
+    gap: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.divider,
-  },
-  rowIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderBottomColor: colors.border,
   },
   rowText: {flex: 1, minWidth: 0},
   rowTitle: {
     fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
     color: colors.text,
+    fontWeight: fontWeight.medium,
   },
-  rowSub: {fontSize: fontSize.small, color: colors.textMuted, marginTop: 2},
-  waBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.successSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+  rowSub: {
+    fontSize: fontSize.small,
+    color: colors.textMuted,
+    marginTop: 2,
   },
-  versionText: {
+  version: {
+    marginTop: spacing.huge,
     textAlign: 'center',
     fontSize: fontSize.caption,
     color: colors.textSubtle,
-    marginTop: spacing.huge,
   },
 });

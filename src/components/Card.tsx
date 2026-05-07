@@ -14,7 +14,7 @@ export const Card: React.FC<Props> = ({
   children,
   style,
   padded = true,
-  bordered = true,
+  bordered = false,
   raised,
 }) => {
   return (

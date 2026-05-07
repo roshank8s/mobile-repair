@@ -1,13 +1,8 @@
 import React from 'react';
 import {StyleProp, StyleSheet, Text, View, ViewStyle} from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import {AnimatedPressable} from './AnimatedPressable';
 import {PlusIcon} from './icons';
-import {colors, fontSize, fontWeight, motion, radii, shadows, spacing} from '../theme/tokens';
+import {colors, fontSize, fontWeight, radii, shadows, spacing} from '../theme/tokens';
 
 type Props = {
   onPress: () => void;
@@ -16,26 +11,18 @@ type Props = {
 };
 
 export const Fab: React.FC<Props> = ({onPress, label, style}) => {
-  const rot = useSharedValue(0);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{rotate: `${rot.value}deg`}],
-  }));
-
   const isExtended = !!label;
-
   return (
     <View style={[styles.wrap, style]} pointerEvents="box-none">
       <AnimatedPressable
-        onPress={() => {
-          rot.value = withSpring(rot.value + 90, motion.springBouncy);
-          onPress();
-        }}
+        onPress={onPress}
         style={[styles.fab, isExtended && styles.fabExtended]}
         scaleTo={0.94}>
-        <Animated.View style={animStyle}>
-          <PlusIcon size={isExtended ? 22 : 28} color={colors.textOnAccent} strokeWidth={2.6} />
-        </Animated.View>
+        <PlusIcon
+          size={isExtended ? 20 : 24}
+          color={colors.textOnAccent}
+          strokeWidth={2.2}
+        />
         {isExtended ? <Text style={styles.label}>{label}</Text> : null}
       </AnimatedPressable>
     </View>
@@ -49,26 +36,26 @@ const styles = StyleSheet.create({
     bottom: spacing.lg,
   },
   fab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.fab,
+    ...shadows.raised,
   },
   fabExtended: {
     width: 'auto',
-    height: 56,
+    height: 52,
     borderRadius: radii.pill,
     flexDirection: 'row',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
   label: {
     color: colors.textOnAccent,
     fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
+    fontWeight: fontWeight.semibold,
     letterSpacing: 0.2,
   },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, Text} from 'react-native';
 import {AnimatedPressable} from './AnimatedPressable';
 import {colors, fontSize, fontWeight, radii, spacing} from '../theme/tokens';
 
@@ -15,13 +15,11 @@ type Props = {
   onChange: (key: string) => void;
 };
 
-/**
- * Horizontal scrollable row of filter chips. The outer ScrollView gets
- * `flexGrow: 0` so it doesn't fill vertical space on tall layouts, and the
- * content container uses `alignItems: 'center'` so chips don't stretch
- * vertically into capsules when the parent flex container hands out extra
- * cross-axis size.
- */
+const formatLabel = (chip: FilterChip): string =>
+  chip.count !== undefined && chip.count > 0
+    ? `${chip.label} ${chip.count}`
+    : chip.label;
+
 export const FilterChips: React.FC<Props> = ({chips, activeKey, onChange}) => {
   return (
     <ScrollView
@@ -36,23 +34,12 @@ export const FilterChips: React.FC<Props> = ({chips, activeKey, onChange}) => {
             key={chip.key}
             onPress={() => onChange(chip.key)}
             style={[styles.chip, active && styles.chipActive]}
-            scaleTo={0.95}>
+            scaleTo={0.96}>
             <Text
               style={[styles.label, active && styles.labelActive]}
               numberOfLines={1}>
-              {chip.label}
+              {formatLabel(chip)}
             </Text>
-            {chip.count !== undefined && chip.count > 0 ? (
-              <View style={[styles.badge, active && styles.badgeActive]}>
-                <Text
-                  style={[
-                    styles.badgeText,
-                    active && styles.badgeTextActive,
-                  ]}>
-                  {chip.count}
-                </Text>
-              </View>
-            ) : null}
           </AnimatedPressable>
         );
       })}
@@ -72,42 +59,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: 7,
-    height: 36,
+    height: 34,
     borderRadius: radii.pill,
-    backgroundColor: colors.card,
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  chipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  label: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
-    color: colors.textMuted,
-  },
-  labelActive: {color: colors.textOnAccent},
-  badge: {
-    minWidth: 20,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 10,
-    backgroundColor: colors.cardMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeActive: {backgroundColor: 'rgba(0,0,0,0.18)'},
-  badgeText: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: colors.textMuted,
-    fontVariant: ['tabular-nums'],
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
-  badgeTextActive: {color: colors.textOnAccent},
+  label: {
+    fontSize: fontSize.small,
+    fontWeight: fontWeight.medium,
+    color: colors.textMuted,
+  },
+  labelActive: {color: colors.textOnPrimary},
 });
