@@ -16,11 +16,6 @@ type Props = {
   onFinished?: () => void;
 };
 
-/**
- * JS-side splash overlay that exactly mirrors the native splash drawable:
- * the Rishi22 card stretched to fill every pixel of the screen, no
- * background colour behind it. Fades out once the app is ready.
- */
 export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
@@ -57,7 +52,7 @@ export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
       <Image
         source={RISHI_CARD}
         style={StyleSheet.absoluteFill}
-        resizeMode="stretch"
+        resizeMode="cover"
       />
     </Animated.View>
   );
@@ -66,7 +61,7 @@ export const SplashOverlay: React.FC<Props> = ({visible, onFinished}) => {
 const styles = StyleSheet.create({
   wrap: {
     zIndex: 1000,
-    // No background colour — the Image fills every pixel itself.
+    backgroundColor: '#1E1B4B',
   },
 });
 
