@@ -14,7 +14,6 @@ import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
 import {Input} from '../../components/Input';
 import {Button} from '../../components/Button';
-import {Card} from '../../components/Card';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {PhotoGallery} from '../../components/PhotoGallery';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
@@ -89,150 +88,136 @@ export const JobCreateScreen: React.FC = () => {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxContentWidth={560}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScreenHeader title="New Job" onBack={() => nav.goBack()} />
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <Animated.View entering={FadeIn.duration(180)}>
-            <SectionTitle>Customer</SectionTitle>
-            <Card>
-              <View style={styles.gap}>
+        <ScreenHeader title="New job" onBack={() => nav.goBack()} />
+        <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <Section title="Customer">
+              <Input
+                label="Phone"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                maxLength={10}
+                leftAdornment={<Text style={styles.prefix}>+91</Text>}
+                hint={
+                  matchingCustomer
+                    ? `Existing customer · ${matchingCustomer.name}`
+                    : undefined
+                }
+              />
+              <Input
+                label="Name"
+                value={name}
+                onChangeText={setName}
+                placeholder="Full name"
+              />
+            </Section>
+
+            <Section title="Device">
+              <View style={styles.row2}>
                 <Input
-                  label="Phone"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  maxLength={10}
-                  leftAdornment={<Text style={styles.prefix}>+91</Text>}
-                  hint={
-                    matchingCustomer
-                      ? `Existing customer · ${matchingCustomer.name}`
-                      : undefined
-                  }
+                  label="Brand"
+                  value={brand}
+                  onChangeText={setBrand}
+                  placeholder="Apple, Samsung..."
+                  containerStyle={styles.flex}
                 />
                 <Input
-                  label="Customer name"
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Full name"
+                  label="Model"
+                  value={model}
+                  onChangeText={setModel}
+                  placeholder="iPhone 13, A52..."
+                  containerStyle={styles.flex}
                 />
               </View>
-            </Card>
-
-            <SectionTitle>Device</SectionTitle>
-            <Card>
-              <View style={styles.gap}>
-                <View style={styles.row2}>
-                  <Input
-                    label="Brand"
-                    value={brand}
-                    onChangeText={setBrand}
-                    placeholder="Apple, Samsung..."
-                    containerStyle={styles.flex}
-                  />
-                  <Input
-                    label="Model"
-                    value={model}
-                    onChangeText={setModel}
-                    placeholder="iPhone 13, A52..."
-                    containerStyle={styles.flex}
-                  />
-                </View>
-                <View style={styles.row2}>
-                  <Input
-                    label="IMEI (optional)"
-                    value={imei}
-                    onChangeText={setImei}
-                    keyboardType="number-pad"
-                    maxLength={15}
-                    containerStyle={styles.flex}
-                  />
-                  <Input
-                    label="Colour"
-                    value={color}
-                    onChangeText={setColor}
-                    placeholder="Midnight, Blue..."
-                    containerStyle={styles.flex}
-                  />
-                </View>
+              <View style={styles.row2}>
                 <Input
-                  label="Password / pattern (optional)"
-                  value={pwdNote}
-                  onChangeText={setPwdNote}
-                  placeholder="PIN, pattern, or 'no lock'"
+                  label="IMEI"
+                  value={imei}
+                  onChangeText={setImei}
+                  keyboardType="number-pad"
+                  maxLength={15}
+                  containerStyle={styles.flex}
                 />
                 <Input
-                  label="Accessories received"
-                  value={accessories}
-                  onChangeText={setAccessories}
-                  placeholder="Charger, case, SIM tray..."
+                  label="Colour"
+                  value={color}
+                  onChangeText={setColor}
+                  placeholder="Midnight, Blue..."
+                  containerStyle={styles.flex}
                 />
               </View>
-            </Card>
+              <Input
+                label="Password / pattern"
+                value={pwdNote}
+                onChangeText={setPwdNote}
+                placeholder="PIN, pattern, or 'no lock'"
+              />
+              <Input
+                label="Accessories received"
+                value={accessories}
+                onChangeText={setAccessories}
+                placeholder="Charger, case, SIM tray..."
+              />
+            </Section>
 
-            <SectionTitle>Device condition photos</SectionTitle>
-            <Card>
+            <Section title="Photos">
               <PhotoGallery
                 photos={photos}
                 onAdd={uri => setPhotos(p => [...p, uri])}
                 onRemove={index =>
                   setPhotos(p => p.filter((_, i) => i !== index))
                 }
-                emptyHint="Snap any cracks, scratches, water damage or missing parts."
+                emptyHint="Capture cracks, scratches or missing parts before repair."
                 max={6}
               />
-            </Card>
+            </Section>
 
-            <SectionTitle>Issue</SectionTitle>
-            <Card>
-              <View style={styles.gap}>
+            <Section title="Issue">
+              <Input
+                label="What's wrong?"
+                value={issue}
+                onChangeText={setIssue}
+                multiline
+                numberOfLines={3}
+                placeholder="e.g. Screen cracked, touch unresponsive..."
+              />
+              <View style={styles.row2}>
                 <Input
-                  label="What's wrong?"
-                  value={issue}
-                  onChangeText={setIssue}
-                  multiline
-                  numberOfLines={3}
-                  placeholder="e.g. Screen cracked, touch unresponsive..."
+                  label="Estimate (₹)"
+                  value={estimate}
+                  onChangeText={setEstimate}
+                  keyboardType="numeric"
+                  leftAdornment={<Text style={styles.prefix}>₹</Text>}
+                  hint="0 if quoting after diagnosis."
+                  containerStyle={styles.flex}
                 />
-                <View style={styles.row2}>
-                  <Input
-                    label="Estimate (₹)"
-                    value={estimate}
-                    onChangeText={setEstimate}
-                    keyboardType="numeric"
-                    leftAdornment={<Text style={styles.prefix}>₹</Text>}
-                    hint="0 if quoting after diagnosis."
-                    containerStyle={styles.flex}
-                  />
-                  <Input
-                    label="Warranty (days)"
-                    value={warrantyDays}
-                    onChangeText={setWarrantyDays}
-                    keyboardType="number-pad"
-                    maxLength={3}
-                    hint="Default 30 days."
-                    containerStyle={styles.flex}
-                  />
-                </View>
+                <Input
+                  label="Warranty (days)"
+                  value={warrantyDays}
+                  onChangeText={setWarrantyDays}
+                  keyboardType="number-pad"
+                  maxLength={3}
+                  hint="Default 30."
+                  containerStyle={styles.flex}
+                />
               </View>
-            </Card>
+            </Section>
 
             {technicians.length > 0 ? (
-              <>
-                <SectionTitle>Assign technician</SectionTitle>
+              <Section title="Technician">
                 <View style={styles.techRow}>
                   <AnimatedPressable
                     onPress={() => setTechId(undefined)}
-                    style={[
-                      styles.techChip,
-                      !techId && styles.techChipActive,
-                    ]}
-                    scaleTo={0.95}>
+                    style={[styles.techChip, !techId && styles.techChipActive]}
+                    scaleTo={0.96}>
                     <Text
                       style={[
                         styles.techLabel,
@@ -251,7 +236,7 @@ export const JobCreateScreen: React.FC = () => {
                           styles.techChip,
                           techId === t.id && styles.techChipActive,
                         ]}
-                        scaleTo={0.95}>
+                        scaleTo={0.96}>
                         <Text
                           style={[
                             styles.techLabel,
@@ -262,10 +247,12 @@ export const JobCreateScreen: React.FC = () => {
                       </AnimatedPressable>
                     ))}
                 </View>
-              </>
+              </Section>
             ) : null}
-          </Animated.View>
-        </ScrollView>
+
+            <View style={{height: spacing.huge}} />
+          </ScrollView>
+        </Animated.View>
         <View style={styles.footer}>
           <Button
             label="Create job ticket"
@@ -281,13 +268,25 @@ export const JobCreateScreen: React.FC = () => {
   );
 };
 
-const SectionTitle: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <Text style={styles.sectionTitle}>{children}</Text>
+const Section: React.FC<{title: string; children: React.ReactNode}> = ({
+  title,
+  children,
+}) => (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={styles.gap}>{children}</View>
+  </View>
 );
 
 const styles = StyleSheet.create({
   flex: {flex: 1},
-  scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
+  scroll: {paddingHorizontal: spacing.xl, paddingBottom: spacing.huge},
+  section: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   gap: {gap: spacing.md},
   row2: {flexDirection: 'row', gap: spacing.md},
   sectionTitle: {
@@ -296,23 +295,24 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginTop: spacing.xl,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
-  prefix: {color: colors.textMuted, fontWeight: fontWeight.semibold},
+  prefix: {color: colors.textMuted, fontWeight: fontWeight.medium},
   techRow: {flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm},
   techChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.pill,
-    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  techChipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
+  techChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
   techLabel: {
     fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
+    fontWeight: fontWeight.medium,
     color: colors.textMuted,
   },
   techLabelActive: {color: colors.textOnPrimary},

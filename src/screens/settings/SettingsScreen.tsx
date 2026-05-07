@@ -2,9 +2,9 @@ import React, {useState} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import Animated, {FadeIn} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
-import {Card} from '../../components/Card';
 import {Input} from '../../components/Input';
 import {Button} from '../../components/Button';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
@@ -78,44 +78,38 @@ export const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxContentWidth={560}>
       <ScreenHeader title="Settings" onBack={() => nav.goBack()} />
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <SectionTitle>Brand</SectionTitle>
-        <Card>
-          <View style={styles.brandRow}>
-            <PhotoPicker
-              uri={shop.logoUri}
-              fallback={(name || 'RS').slice(0, 2)}
-              size={84}
-              shape="rounded"
-              label="Shop logo"
-              background={colors.primary}
-              textColor={colors.textOnPrimary}
-              onChange={u => updateShop({logoUri: u ?? undefined})}
-            />
-            <PhotoPicker
-              uri={shop.ownerAvatarUri}
-              fallback={(ownerName || 'O').slice(0, 2)}
-              size={84}
-              label="Owner photo"
-              onChange={u => updateShop({ownerAvatarUri: u ?? undefined})}
-            />
-          </View>
-        </Card>
+      <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <Section title="Brand">
+            <View style={styles.brandRow}>
+              <PhotoPicker
+                uri={shop.logoUri}
+                fallback={(name || 'RS').slice(0, 2)}
+                size={84}
+                shape="rounded"
+                label="Shop logo"
+                background={colors.brand}
+                textColor={colors.textOnPrimary}
+                onChange={u => updateShop({logoUri: u ?? undefined})}
+              />
+              <PhotoPicker
+                uri={shop.ownerAvatarUri}
+                fallback={(ownerName || 'O').slice(0, 2)}
+                size={84}
+                label="Owner photo"
+                onChange={u => updateShop({ownerAvatarUri: u ?? undefined})}
+              />
+            </View>
+          </Section>
 
-        <SectionTitle>Shop info</SectionTitle>
-        <Card>
-          <View style={styles.gap}>
+          <Section title="Shop info">
             <Input label="Shop name" value={name} onChangeText={setName} />
-            <Input
-              label="Owner"
-              value={ownerName}
-              onChangeText={setOwnerName}
-            />
+            <Input label="Owner" value={ownerName} onChangeText={setOwnerName} />
             <Input
               label="Phone"
               value={phone}
@@ -130,12 +124,9 @@ export const SettingsScreen: React.FC = () => {
               multiline
               numberOfLines={2}
             />
-          </View>
-        </Card>
+          </Section>
 
-        <SectionTitle>GST</SectionTitle>
-        <Card>
-          <View style={styles.gap}>
+          <Section title="GST">
             <Input
               label="GSTIN"
               value={gstin}
@@ -150,12 +141,9 @@ export const SettingsScreen: React.FC = () => {
               keyboardType="number-pad"
               maxLength={2}
             />
-          </View>
-        </Card>
+          </Section>
 
-        <SectionTitle>Technicians</SectionTitle>
-        <Card>
-          <View style={styles.gap}>
+          <Section title="Technicians">
             {technicians.length === 0 ? (
               <Text style={styles.muted}>No technicians yet.</Text>
             ) : (
@@ -176,11 +164,12 @@ export const SettingsScreen: React.FC = () => {
                         .split(' ')
                         .map(p => p[0] ?? '')
                         .join('')}
+                      seed={t.id}
                       size={44}
                     />
                     <View style={styles.techAvatarBadge}>
                       <CameraIcon
-                        size={11}
+                        size={10}
                         color={colors.textOnPrimary}
                         strokeWidth={2.4}
                       />
@@ -195,8 +184,8 @@ export const SettingsScreen: React.FC = () => {
                   <AnimatedPressable
                     onPress={() => removeTechnician(t.id)}
                     style={styles.techRemove}
-                    scaleTo={0.9}>
-                    <TrashIcon size={18} color={colors.danger} />
+                    scaleTo={0.92}>
+                    <TrashIcon size={16} color={colors.textSubtle} />
                   </AnimatedPressable>
                 </View>
               ))
@@ -205,57 +194,73 @@ export const SettingsScreen: React.FC = () => {
               <Input
                 value={newTech}
                 onChangeText={setNewTech}
-                placeholder="Technician name"
+                placeholder="Add technician"
                 containerStyle={styles.flex}
                 onSubmitEditing={onAddTech}
               />
               <AnimatedPressable
                 onPress={onAddTech}
                 style={styles.addBtn}
-                scaleTo={0.92}>
-                <PlusIcon size={18} color={colors.textOnAccent} />
+                scaleTo={0.94}>
+                <PlusIcon
+                  size={20}
+                  color={colors.textOnPrimary}
+                  strokeWidth={2.2}
+                />
               </AnimatedPressable>
             </View>
-          </View>
-        </Card>
+          </Section>
 
-        <Button
-          label="Save settings"
-          variant="primary"
-          size="lg"
-          onPress={save}
-          fullWidth
-          style={{marginTop: spacing.lg}}
-        />
-        <Button
-          label="Reset all data"
-          variant="ghost"
-          onPress={onReset}
-          style={{marginTop: spacing.md}}
-        />
-        <View style={{height: spacing.huge}} />
-      </ScrollView>
+          <View style={styles.actions}>
+            <Button
+              label="Save settings"
+              variant="primary"
+              size="lg"
+              onPress={save}
+              fullWidth
+            />
+            <Button
+              label="Reset all data"
+              variant="ghost"
+              onPress={onReset}
+              style={{marginTop: spacing.md}}
+            />
+          </View>
+          <View style={{height: spacing.huge}} />
+        </ScrollView>
+      </Animated.View>
     </Screen>
   );
 };
 
-const SectionTitle: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <Text style={styles.sectionTitle}>{children}</Text>
+const Section: React.FC<{title: string; children: React.ReactNode}> = ({
+  title,
+  children,
+}) => (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={styles.sectionBody}>{children}</View>
+  </View>
 );
 
 const styles = StyleSheet.create({
   flex: {flex: 1},
-  scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
+  scroll: {paddingHorizontal: spacing.xl, paddingBottom: spacing.huge},
+  section: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   sectionTitle: {
     fontSize: fontSize.caption,
     fontWeight: fontWeight.medium,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginTop: spacing.xl,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
-  gap: {gap: spacing.md},
+  sectionBody: {gap: spacing.md},
   brandRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -281,7 +286,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.card,
   },
-  muted: {fontSize: fontSize.small, color: colors.textMuted},
+  muted: {fontSize: fontSize.body, color: colors.textMuted},
   techRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,15 +295,17 @@ const styles = StyleSheet.create({
   },
   techName: {
     fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
+    fontWeight: fontWeight.medium,
     color: colors.text,
   },
-  techPhone: {fontSize: fontSize.caption, color: colors.textMuted, marginTop: 2},
+  techPhone: {
+    marginTop: 2,
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+  },
   techRemove: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.dangerSoft,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -307,8 +314,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radii.md,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  actions: {
+    paddingTop: spacing.xl,
   },
 });

@@ -14,13 +14,13 @@ import {
   type RouteProp,
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import Animated, {FadeIn} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
-import {Card} from '../../components/Card';
 import {Input} from '../../components/Input';
 import {Button} from '../../components/Button';
 import {PhotoPicker} from '../../components/PhotoPicker';
-import {colors, fontWeight, spacing} from '../../theme/tokens';
+import {colors, fontSize, fontWeight, spacing} from '../../theme/tokens';
 import {deletePart, upsertPart, useStoreState} from '../../data/store';
 import {useToast} from '../../components/Toast';
 import {success as hapticSuccess} from '../../lib/haptics';
@@ -40,9 +40,7 @@ export const PartEditScreen: React.FC = () => {
 
   const [name, setName] = useState(existing?.name ?? '');
   const [brand, setBrand] = useState(existing?.brand ?? '');
-  const [compatModels, setCompatModels] = useState(
-    existing?.compatModels ?? '',
-  );
+  const [compatModels, setCompatModels] = useState(existing?.compatModels ?? '');
   const [supplier, setSupplier] = useState(existing?.supplier ?? '');
   const [costPrice, setCostPrice] = useState(
     existing ? String(existing.costPrice) : '',
@@ -96,7 +94,7 @@ export const PartEditScreen: React.FC = () => {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} maxContentWidth={560}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -104,29 +102,30 @@ export const PartEditScreen: React.FC = () => {
           title={existing ? 'Edit part' : 'Add part'}
           onBack={() => nav.goBack()}
         />
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <Card>
-            <View style={styles.gap}>
-              <View style={styles.imageRow}>
-                <PhotoPicker
-                  uri={imageUri}
-                  fallback={name.slice(0, 2) || 'P'}
-                  size={88}
-                  shape="rounded"
-                  label="Part image"
-                  onChange={u => setImageUri(u ?? undefined)}
-                />
-              </View>
+        <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <View style={styles.imageRow}>
+              <PhotoPicker
+                uri={imageUri}
+                fallback={name.slice(0, 2) || 'P'}
+                size={88}
+                shape="rounded"
+                label="Part image"
+                onChange={u => setImageUri(u ?? undefined)}
+              />
+            </View>
+
+            <Section title="Identity">
               <Input
                 label="Part name"
                 value={name}
                 onChangeText={setName}
                 placeholder="e.g. iPhone 13 Display"
               />
-              <View style={styles.row}>
+              <View style={styles.row2}>
                 <Input
                   label="Brand"
                   value={brand}
@@ -135,16 +134,25 @@ export const PartEditScreen: React.FC = () => {
                   placeholder="Apple, Samsung..."
                 />
                 <Input
-                  label="Models supported"
+                  label="Models"
                   value={compatModels}
                   onChangeText={setCompatModels}
                   containerStyle={styles.flex}
                   placeholder="iPhone 13, 13 Pro"
                 />
               </View>
-              <View style={styles.row}>
+              <Input
+                label="Supplier"
+                value={supplier}
+                onChangeText={setSupplier}
+                placeholder="Vendor name / shop"
+              />
+            </Section>
+
+            <Section title="Pricing">
+              <View style={styles.row2}>
                 <Input
-                  label="Cost price (₹)"
+                  label="Cost price"
                   value={costPrice}
                   onChangeText={setCostPrice}
                   keyboardType="numeric"
@@ -152,7 +160,7 @@ export const PartEditScreen: React.FC = () => {
                   leftAdornment={<Text style={styles.prefix}>₹</Text>}
                 />
                 <Input
-                  label="Sell price (₹)"
+                  label="Sell price"
                   value={sellPrice}
                   onChangeText={setSellPrice}
                   keyboardType="numeric"
@@ -160,13 +168,10 @@ export const PartEditScreen: React.FC = () => {
                   leftAdornment={<Text style={styles.prefix}>₹</Text>}
                 />
               </View>
-              <Input
-                label="Supplier (optional)"
-                value={supplier}
-                onChangeText={setSupplier}
-                placeholder="Vendor name / shop"
-              />
-              <View style={styles.row}>
+            </Section>
+
+            <Section title="Stock">
+              <View style={styles.row2}>
                 <Input
                   label="Current stock"
                   value={stock}
@@ -182,17 +187,20 @@ export const PartEditScreen: React.FC = () => {
                   containerStyle={styles.flex}
                 />
               </View>
-            </View>
-          </Card>
-          {existing ? (
-            <Button
-              label="Delete part"
-              variant="danger"
-              onPress={remove}
-              style={{marginTop: spacing.lg}}
-            />
-          ) : null}
-        </ScrollView>
+            </Section>
+
+            {existing ? (
+              <Button
+                label="Delete part"
+                variant="ghost"
+                onPress={remove}
+                style={styles.deleteBtn}
+              />
+            ) : null}
+
+            <View style={{height: spacing.huge}} />
+          </ScrollView>
+        </Animated.View>
         <View style={styles.footer}>
           <Button
             label={existing ? 'Save changes' : 'Add part'}
@@ -208,13 +216,41 @@ export const PartEditScreen: React.FC = () => {
   );
 };
 
+const Section: React.FC<{title: string; children: React.ReactNode}> = ({
+  title,
+  children,
+}) => (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={styles.gap}>{children}</View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   flex: {flex: 1},
-  scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
+  scroll: {paddingHorizontal: spacing.xl, paddingBottom: spacing.huge},
+  imageRow: {alignItems: 'center', paddingVertical: spacing.lg},
+  section: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sectionTitle: {
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.medium,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: spacing.md,
+  },
   gap: {gap: spacing.md},
-  imageRow: {alignItems: 'center', paddingVertical: spacing.sm},
-  row: {flexDirection: 'row', gap: spacing.md},
-  prefix: {color: colors.textMuted, fontWeight: fontWeight.semibold},
+  row2: {flexDirection: 'row', gap: spacing.md},
+  prefix: {color: colors.textMuted, fontWeight: fontWeight.medium},
+  deleteBtn: {
+    marginTop: spacing.xl,
+    alignSelf: 'center',
+  },
   footer: {
     padding: spacing.lg,
     borderTopWidth: 1,

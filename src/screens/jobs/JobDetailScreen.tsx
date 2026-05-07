@@ -15,24 +15,16 @@ import {
   type RouteProp,
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import Animated, {FadeInDown, FadeIn, ZoomIn} from 'react-native-reanimated';
+import Animated, {FadeIn, ZoomIn} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
-import {Card} from '../../components/Card';
 import {Button} from '../../components/Button';
 import {Input} from '../../components/Input';
 import {StatusPill} from '../../components/StatusPill';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
-import {Avatar} from '../../components/Avatar';
 import {PhotoGallery} from '../../components/PhotoGallery';
-import {
-  CalendarIcon,
-  CheckIcon,
-  PhoneIcon,
-  TrashIcon,
-  WhatsAppIcon,
-} from '../../components/icons';
-import {colors, fontSize, fontWeight, radii, shadows, spacing} from '../../theme/tokens';
+import {CheckIcon, TrashIcon} from '../../components/icons';
+import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {
   addJobPhoto,
   addPartToJob,
@@ -55,7 +47,7 @@ import {formatDateTime, formatRelative} from '../../lib/date';
 import {splitGstFromInclusive} from '../../lib/gst';
 import {callPhone, openWhatsApp} from '../../lib/whatsapp';
 import {useToast} from '../../components/Toast';
-import {success as hapticSuccess, warn as hapticWarn} from '../../lib/haptics';
+import {success as hapticSuccess} from '../../lib/haptics';
 import type {RootStackParamList} from '../../app/navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -84,11 +76,15 @@ export const JobDetailScreen: React.FC = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const totals = useMemo(() => {
-    if (!job) return {total: 0, partsTotal: 0, paid: 0, due: 0, status: 'pending' as const};
-    const partsTotal = job.parts.reduce(
-      (s, p) => s + p.unitPrice * p.qty,
-      0,
-    );
+    if (!job)
+      return {
+        total: 0,
+        partsTotal: 0,
+        paid: 0,
+        due: 0,
+        status: 'pending' as const,
+      };
+    const partsTotal = job.parts.reduce((s, p) => s + p.unitPrice * p.qty, 0);
     const total = job.finalAmount ?? job.estimateAmount ?? partsTotal;
     const paid = jobPayments.reduce((s, p) => s + p.amount, 0);
     const due = Math.max(0, total - paid);
@@ -128,7 +124,10 @@ export const JobDetailScreen: React.FC = () => {
 
   const generateInvoice = () => {
     if (totals.total <= 0) {
-      Alert.alert('Add an amount', 'Set the final amount before generating an invoice.');
+      Alert.alert(
+        'Add an amount',
+        'Set the final amount before generating an invoice.',
+      );
       return;
     }
     const split = splitGstFromInclusive(totals.total, shop.gstRatePct);
@@ -144,174 +143,159 @@ export const JobDetailScreen: React.FC = () => {
     openWhatsApp(customer.phone, msg);
   };
 
+  const photos = job.photos ?? [];
+
   return (
     <Screen>
-      <ScreenHeader
-        title={job.ticketNo}
-        subtitle={`${job.device.brand} ${job.device.model}`}
-        onBack={() => nav.goBack()}
-      />
+      <ScreenHeader title="" onBack={() => nav.goBack()} />
+      <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}>
+          {photos.length > 0 ? (
+            <PhotoHero photos={photos} />
+          ) : null}
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}>
-        {(job.photos ?? []).length > 0 ? (
-          <PhotoHero
-            photos={job.photos ?? []}
-            status={job.status}
-            ticketNo={job.ticketNo}
-          />
-        ) : (
-          <Animated.View entering={FadeIn.duration(220)} style={styles.statusBox}>
-            <StatusPill status={job.status} />
-            <Text style={styles.received}>
-              Received {formatRelative(job.receivedAt)}
+          <View style={styles.heroBlock}>
+            <Text style={styles.ticket}>{job.ticketNo}</Text>
+            <Text style={styles.device}>
+              {job.device.brand} {job.device.model}
             </Text>
-          </Animated.View>
-        )}
-
-        <SectionTitle>Customer</SectionTitle>
-        <Card>
-          <View style={styles.row}>
-            <Avatar
-              uri={customer?.avatarUri}
-              fallback={(customer?.name ?? 'W')
-                .split(' ')
-                .map(p => p[0] ?? '')
-                .join('')}
-              size={44}
-              style={{marginRight: 12}}
-            />
-            <View style={styles.flex}>
-              <Text style={styles.cardTitle}>{customer?.name ?? 'Walk-in'}</Text>
-              <Text style={styles.cardSub}>+91 {customer?.phone}</Text>
-            </View>
-            <View style={styles.actionRow}>
-              <AnimatedPressable
-                onPress={() => customer && callPhone(customer.phone)}
-                style={styles.miniBtn}
-                scaleTo={0.92}>
-                <PhoneIcon size={18} color={colors.primary} />
-              </AnimatedPressable>
-              <AnimatedPressable
-                onPress={sendWhatsAppUpdate}
-                style={[styles.miniBtn, {backgroundColor: '#E7F8EE'}]}
-                scaleTo={0.92}>
-                <WhatsAppIcon size={18} color={colors.success} />
-              </AnimatedPressable>
+            <View style={styles.heroPillRow}>
+              <StatusPill status={job.status} />
+              <Text style={styles.received}>
+                Received {formatRelative(job.receivedAt)}
+              </Text>
             </View>
           </View>
-        </Card>
 
-        <SectionTitle>Issue</SectionTitle>
-        <Card>
-          <Text style={styles.issueText}>{job.issue}</Text>
-          {job.device.imei ? (
-            <Text style={styles.metaText}>IMEI: {job.device.imei}</Text>
-          ) : null}
-          {job.device.color ? (
-            <Text style={styles.metaText}>Colour: {job.device.color}</Text>
-          ) : null}
-          {job.device.passwordNote ? (
-            <Text style={styles.metaText}>Lock: {job.device.passwordNote}</Text>
-          ) : null}
-          {job.device.accessories ? (
-            <Text style={styles.metaText}>
-              Accessories: {job.device.accessories}
-            </Text>
-          ) : null}
-          {technician ? (
-            <Text style={styles.metaText}>Technician: {technician.name}</Text>
-          ) : null}
-        </Card>
-
-        <SectionTitle>Device condition photos</SectionTitle>
-        <Card>
-          <PhotoGallery
-            photos={job.photos ?? []}
-            onAdd={uri => addJobPhoto(job.id, uri)}
-            onRemove={i => removeJobPhoto(job.id, i)}
-            emptyHint="No photos yet — tap Camera to capture device condition."
-            max={6}
-          />
-        </Card>
-
-        <SectionTitle>Status timeline</SectionTitle>
-        <Card>
-          {job.statusLog.map((entry, i) => (
-            <Animated.View
-              key={`${entry.status}-${entry.at}`}
-              entering={FadeInDown.duration(220).delay(i * 50)}
-              style={styles.timelineRow}>
-              <View style={styles.timelineCol}>
-                <View style={styles.timelineDot} />
-                {i < job.statusLog.length - 1 ? (
-                  <View style={styles.timelineLine} />
-                ) : null}
-              </View>
+          <Section title="Customer">
+            <View style={styles.customerRow}>
               <View style={styles.flex}>
-                <Text style={styles.timelineStatus}>
-                  {JOB_STATUS_LABEL[entry.status]}
+                <Text style={styles.customerName}>
+                  {customer?.name ?? 'Walk-in'}
                 </Text>
-                <Text style={styles.timelineTime}>
-                  {formatDateTime(entry.at)}
-                </Text>
-                {entry.note ? (
-                  <Text style={styles.timelineNote}>{entry.note}</Text>
-                ) : null}
+                <Text style={styles.customerSub}>+91 {customer?.phone}</Text>
               </View>
-            </Animated.View>
-          ))}
-        </Card>
+              <View style={styles.actionRow}>
+                <Button
+                  label="Call"
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => customer && callPhone(customer.phone)}
+                />
+                <Button
+                  label="WhatsApp"
+                  variant="secondary"
+                  size="sm"
+                  onPress={sendWhatsAppUpdate}
+                />
+              </View>
+            </View>
+          </Section>
 
-        <SectionTitle>Parts used</SectionTitle>
-        <Card>
-          {job.parts.length === 0 ? (
-            <Text style={styles.emptyText}>No parts added yet.</Text>
-          ) : (
-            <View style={styles.gap}>
-              {job.parts.map(p => (
-                <View key={p.partId} style={styles.partRow}>
-                  <View style={styles.flex}>
-                    <Text style={styles.partName}>{p.name}</Text>
-                    <Text style={styles.partMeta}>
-                      {p.qty} × {formatINR(p.unitPrice)}
-                    </Text>
+          <Section title="Issue">
+            <Text style={styles.issueText}>{job.issue}</Text>
+            {[
+              ['IMEI', job.device.imei],
+              ['Colour', job.device.color],
+              ['Lock', job.device.passwordNote],
+              ['Accessories', job.device.accessories],
+              ['Technician', technician?.name],
+            ]
+              .filter(([, v]) => !!v)
+              .map(([label, value]) => (
+                <View key={label as string} style={styles.metaRow}>
+                  <Text style={styles.metaLabel}>{label}</Text>
+                  <Text style={styles.metaValue}>{value as string}</Text>
+                </View>
+              ))}
+          </Section>
+
+          <Section title="Photos">
+            <PhotoGallery
+              photos={photos}
+              onAdd={uri => addJobPhoto(job.id, uri)}
+              onRemove={i => removeJobPhoto(job.id, i)}
+              emptyHint="No photos yet — capture device condition before repair."
+              max={6}
+            />
+          </Section>
+
+          <Section title="Status timeline">
+            {job.statusLog.map((entry, i) => {
+              const isLast = i === job.statusLog.length - 1;
+              return (
+                <View
+                  key={`${entry.status}-${entry.at}`}
+                  style={styles.timelineEntry}>
+                  <View style={styles.timelineMarker}>
+                    <View
+                      style={[
+                        styles.timelineDot,
+                        isLast && styles.timelineDotActive,
+                      ]}
+                    />
+                    {!isLast ? <View style={styles.timelineLine} /> : null}
                   </View>
-                  <View style={styles.row}>
+                  <View style={styles.flex}>
+                    <Text style={styles.timelineStatus}>
+                      {JOB_STATUS_LABEL[entry.status]}
+                    </Text>
+                    <Text style={styles.timelineTime}>
+                      {formatDateTime(entry.at)}
+                    </Text>
+                    {entry.note ? (
+                      <Text style={styles.timelineNote}>{entry.note}</Text>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
+          </Section>
+
+          <Section title="Parts used">
+            {job.parts.length === 0 ? (
+              <Text style={styles.emptyText}>No parts added.</Text>
+            ) : (
+              <View>
+                {job.parts.map(p => (
+                  <View key={p.partId} style={styles.partRow}>
+                    <View style={styles.flex}>
+                      <Text style={styles.partName}>{p.name}</Text>
+                      <Text style={styles.partMeta}>
+                        {p.qty} × {formatINR(p.unitPrice)}
+                      </Text>
+                    </View>
                     <Text style={styles.partTotal}>
                       {formatINR(p.qty * p.unitPrice)}
                     </Text>
                     <AnimatedPressable
                       onPress={() => removePartFromJob(job.id, p.partId)}
-                      style={styles.miniBtn}
-                      scaleTo={0.9}>
-                      <TrashIcon size={16} color={colors.danger} />
+                      style={styles.removeBtn}
+                      scaleTo={0.92}>
+                      <TrashIcon size={14} color={colors.textSubtle} />
                     </AnimatedPressable>
                   </View>
+                ))}
+                <View style={styles.partSubtotalRow}>
+                  <Text style={styles.partSubtotalLabel}>Parts subtotal</Text>
+                  <Text style={styles.partSubtotalValue}>
+                    {formatINR(totals.partsTotal)}
+                  </Text>
                 </View>
-              ))}
-              <View style={styles.divider} />
-              <View style={styles.partRow}>
-                <Text style={styles.partsTotal}>Parts subtotal</Text>
-                <Text style={styles.partsTotalAmt}>
-                  {formatINR(totals.partsTotal)}
-                </Text>
               </View>
-            </View>
-          )}
-          <Button
-            label="Add part from inventory"
-            onPress={() => setPartModalOpen(true)}
-            variant="outline"
-            size="sm"
-            style={{marginTop: spacing.md}}
-          />
-        </Card>
+            )}
+            <Button
+              label="Add part"
+              variant="ghost"
+              size="sm"
+              onPress={() => setPartModalOpen(true)}
+              style={styles.addPartBtn}
+            />
+          </Section>
 
-        <SectionTitle>Charges</SectionTitle>
-        <Card>
-          <View style={styles.gap}>
+          <Section title="Charges">
             <Input
               label="Final amount (₹)"
               value={String(job.finalAmount ?? job.estimateAmount ?? 0)}
@@ -321,7 +305,9 @@ export const JobDetailScreen: React.FC = () => {
             />
 
             <View style={styles.payRow}>
-              <PaymentBadge status={totals.status} />
+              <Text style={[styles.payStatus, payStatusStyle(totals.status)]}>
+                {payStatusLabel(totals.status)}
+              </Text>
               <View style={styles.flex}>
                 <Text style={styles.payLine}>
                   Paid {formatINR(totals.paid)} of {formatINR(totals.total)}
@@ -336,9 +322,10 @@ export const JobDetailScreen: React.FC = () => {
 
             <Button
               label={totals.due > 0 ? 'Record payment' : 'Add another payment'}
-              variant="outline"
+              variant="ghost"
               size="sm"
               onPress={() => setPaymentModalOpen(true)}
+              style={styles.payBtn}
             />
 
             {jobPayments.length > 0 ? (
@@ -347,9 +334,7 @@ export const JobDetailScreen: React.FC = () => {
                   <View key={p.id} style={styles.payItem}>
                     <Text style={styles.payMode}>{p.mode.toUpperCase()}</Text>
                     <Text style={styles.payAmt}>{formatINR(p.amount)}</Text>
-                    <Text style={styles.payTime}>
-                      {formatRelative(p.at)}
-                    </Text>
+                    <Text style={styles.payTime}>{formatRelative(p.at)}</Text>
                   </View>
                 ))}
               </View>
@@ -357,30 +342,26 @@ export const JobDetailScreen: React.FC = () => {
 
             {invoice ? (
               <View style={styles.invoiceBadge}>
-                <CheckIcon size={16} color={colors.success} />
+                <CheckIcon size={14} color={colors.success} strokeWidth={2.4} />
                 <Text style={styles.invoiceLabel}>
                   Invoice {invoice.invoiceNo} generated
                 </Text>
               </View>
             ) : null}
-          </View>
-        </Card>
+          </Section>
 
-        {/* Warranty */}
-        {(job.warrantyDays ?? 0) > 0 ? (
-          <>
-            <SectionTitle>Warranty</SectionTitle>
-            <Card>
+          {(job.warrantyDays ?? 0) > 0 ? (
+            <Section title="Warranty">
               <WarrantyBlock
                 warrantyDays={job.warrantyDays!}
                 deliveredAt={job.deliveredAt}
               />
-            </Card>
-          </>
-        ) : null}
+            </Section>
+          ) : null}
 
-        <View style={{height: spacing.huge}} />
-      </ScrollView>
+          <View style={{height: 140}} />
+        </ScrollView>
+      </Animated.View>
 
       <View style={styles.footer}>
         {next ? (
@@ -408,7 +389,7 @@ export const JobDetailScreen: React.FC = () => {
               ? nav.navigate('InvoiceDetail', {invoiceId: invoice.id})
               : generateInvoice()
           }
-          variant="accent"
+          variant="secondary"
           size="lg"
           style={styles.footerBtn}
         />
@@ -439,67 +420,52 @@ export const JobDetailScreen: React.FC = () => {
 
       <SuccessOverlay
         visible={statusOverlay === 'ready'}
-        message="Ready for pickup!"
+        message="Ready for pickup"
       />
     </Screen>
   );
 };
 
-const PhotoHero: React.FC<{
-  photos: string[];
-  status: JobStatus;
-  ticketNo: string;
-}> = ({photos, status, ticketNo}) => {
+const Section: React.FC<{title: string; children: React.ReactNode}> = ({
+  title,
+  children,
+}) => (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={styles.sectionBody}>{children}</View>
+  </View>
+);
+
+const PhotoHero: React.FC<{photos: string[]}> = ({photos}) => {
   const {width} = useWindowDimensions();
-  const heroHeight = Math.min(280, Math.round(width * 0.62));
-  const itemWidth = Math.min(width, 720) - spacing.lg * 2;
+  const heroHeight = Math.min(280, Math.round(width * 0.55));
   return (
     <View style={[styles.photoHero, {height: heroHeight}]}>
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        snapToInterval={itemWidth}
-        decelerationRate="fast"
-        contentContainerStyle={styles.photoHeroScroll}>
+        snapToInterval={width}
+        decelerationRate="fast">
         {photos.map((uri, i) => (
           <View
             key={`hero-${i}`}
-            style={[styles.photoHeroSlide, {width: itemWidth, height: heroHeight}]}>
+            style={[styles.photoHeroSlide, {width, height: heroHeight}]}>
             <Image source={{uri}} style={styles.photoHeroImg} />
           </View>
         ))}
       </ScrollView>
-      <View style={styles.photoHeroOverlay} pointerEvents="none">
-        <View style={styles.photoHeroPill}>
-          <StatusPill status={status} size="sm" />
-        </View>
-        <View style={styles.photoHeroCount}>
-          <Text style={styles.photoHeroCountText}>
-            {ticketNo} · {photos.length} photo{photos.length === 1 ? '' : 's'}
-          </Text>
-        </View>
-      </View>
     </View>
   );
 };
 
-const PAYMENT_STATUS_META = {
-  paid: {label: 'Paid', bg: colors.successSoft, fg: '#166534', dot: colors.success},
-  partial: {label: 'Partial', bg: colors.warningSoft, fg: '#92400E', dot: colors.warning},
-  pending: {label: 'Pending', bg: colors.dangerSoft, fg: colors.danger, dot: colors.danger},
-} as const;
+const payStatusLabel = (s: 'paid' | 'partial' | 'pending'): string =>
+  s === 'paid' ? 'Paid' : s === 'partial' ? 'Partial' : 'Pending';
 
-const PaymentBadge: React.FC<{status: 'paid' | 'partial' | 'pending'}> = ({
-  status,
-}) => {
-  const m = PAYMENT_STATUS_META[status];
-  return (
-    <View style={[styles.payBadge, {backgroundColor: m.bg}]}>
-      <View style={[styles.payDot, {backgroundColor: m.dot}]} />
-      <Text style={[styles.payBadgeText, {color: m.fg}]}>{m.label}</Text>
-    </View>
-  );
+const payStatusStyle = (s: 'paid' | 'partial' | 'pending') => {
+  if (s === 'paid') return {color: colors.success};
+  if (s === 'partial') return {color: colors.warning};
+  return {color: colors.danger};
 };
 
 const WarrantyBlock: React.FC<{warrantyDays: number; deliveredAt?: string}> = ({
@@ -509,7 +475,7 @@ const WarrantyBlock: React.FC<{warrantyDays: number; deliveredAt?: string}> = ({
   if (!deliveredAt) {
     return (
       <Text style={styles.warrantyHint}>
-        Job will carry a {warrantyDays}-day warranty once delivered.
+        {warrantyDays}-day warranty starts on delivery.
       </Text>
     );
   }
@@ -522,7 +488,9 @@ const WarrantyBlock: React.FC<{warrantyDays: number; deliveredAt?: string}> = ({
   return (
     <View>
       <Text style={[styles.warrantyTitle, expired && {color: colors.danger}]}>
-        {expired ? 'Warranty expired' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} of warranty left`}
+        {expired
+          ? 'Warranty expired'
+          : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`}
       </Text>
       <Text style={styles.warrantySub}>
         {warrantyDays}-day cover · until{' '}
@@ -535,10 +503,6 @@ const WarrantyBlock: React.FC<{warrantyDays: number; deliveredAt?: string}> = ({
     </View>
   );
 };
-
-const SectionTitle: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <Text style={styles.sectionTitle}>{children}</Text>
-);
 
 const PartPickerModal: React.FC<{
   visible: boolean;
@@ -586,13 +550,15 @@ const PartPickerModal: React.FC<{
               ]}
               scaleTo={0.99}>
               <View style={styles.flex}>
-                <Text style={styles.cardTitle}>{p.name}</Text>
-                <Text style={styles.cardSub}>
+                <Text style={styles.partOptionName}>{p.name}</Text>
+                <Text style={styles.partOptionMeta}>
                   {p.brand ?? 'Generic'} · {p.compatModels ?? 'Universal'}
                 </Text>
               </View>
               <View style={styles.partOptionRight}>
-                <Text style={styles.partTotal}>{formatINR(p.sellPrice)}</Text>
+                <Text style={styles.partOptionPrice}>
+                  {formatINR(p.sellPrice)}
+                </Text>
                 <Text
                   style={[
                     styles.stockTag,
@@ -624,7 +590,11 @@ const PaymentModal: React.FC<{
   }, [amount]);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={onClose}
+      transparent>
       <View style={styles.modalBackdrop}>
         <View style={styles.modalSheet}>
           <Text style={styles.modalTitle}>Record payment</Text>
@@ -634,13 +604,13 @@ const PaymentModal: React.FC<{
             onChangeText={setAmt}
             keyboardType="numeric"
           />
-          <View style={[styles.row, {marginTop: spacing.md, gap: spacing.sm}]}>
+          <View style={styles.modeRow}>
             {(['cash', 'upi', 'card'] as PaymentMode[]).map(m => (
               <AnimatedPressable
                 key={m}
                 onPress={() => setMode(m)}
                 style={[styles.modeChip, mode === m && styles.modeChipActive]}
-                scaleTo={0.95}>
+                scaleTo={0.96}>
                 <Text
                   style={[
                     styles.modeLabel,
@@ -651,7 +621,7 @@ const PaymentModal: React.FC<{
               </AnimatedPressable>
             ))}
           </View>
-          <View style={[styles.row, {marginTop: spacing.lg, gap: spacing.md}]}>
+          <View style={styles.modalFooter}>
             <Button label="Cancel" variant="ghost" onPress={onClose} />
             <Button
               label="Confirm"
@@ -673,12 +643,12 @@ const SuccessOverlay: React.FC<{visible: boolean; message: string}> = ({
 }) => {
   if (!visible) return null;
   return (
-    <Animated.View
-      entering={FadeIn.duration(160)}
-      style={styles.successOverlay}>
-      <Animated.View entering={ZoomIn.duration(280).springify()} style={styles.successCard}>
+    <Animated.View entering={FadeIn.duration(160)} style={styles.successOverlay}>
+      <Animated.View
+        entering={ZoomIn.duration(280).springify()}
+        style={styles.successCard}>
         <View style={styles.successIcon}>
-          <CheckIcon size={40} color="#FFFFFF" strokeWidth={3} />
+          <CheckIcon size={36} color="#FFFFFF" strokeWidth={3} />
         </View>
         <Text style={styles.successText}>{message}</Text>
       </Animated.View>
@@ -686,330 +656,375 @@ const SuccessOverlay: React.FC<{visible: boolean; message: string}> = ({
   );
 };
 
-// styles
 const styles = StyleSheet.create({
   flex: {flex: 1},
-  scroll: {paddingHorizontal: spacing.lg, paddingBottom: 120},
-  statusBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
+  scroll: {paddingBottom: 0},
+
   photoHero: {
-    marginBottom: spacing.md,
     overflow: 'hidden',
+    backgroundColor: colors.primaryMuted,
   },
-  photoHeroScroll: {paddingHorizontal: 0},
-  photoHeroSlide: {
-    backgroundColor: colors.cardMuted,
-    overflow: 'hidden',
-    borderRadius: radii.xl,
-    marginRight: 0,
-  },
+  photoHeroSlide: {overflow: 'hidden'},
   photoHeroImg: {width: '100%', height: '100%'},
-  photoHeroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    padding: spacing.md,
-    justifyContent: 'space-between',
+
+  heroBlock: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+    gap: 4,
   },
-  photoHeroPill: {alignSelf: 'flex-start'},
-  photoHeroCount: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radii.pill,
-  },
-  photoHeroCountText: {
-    color: '#FFFFFF',
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
+  ticket: {
+    fontSize: fontSize.display,
+    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    letterSpacing: -0.4,
     fontVariant: ['tabular-nums'],
   },
-  received: {fontSize: fontSize.small, color: colors.textSubtle},
-  sectionTitle: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  row: {flexDirection: 'row', alignItems: 'center'},
-  gap: {gap: spacing.md},
-  cardTitle: {
+  device: {
     fontSize: fontSize.bodyLg,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textMuted,
   },
-  cardSub: {fontSize: fontSize.small, color: colors.textMuted, marginTop: 2},
-  actionRow: {flexDirection: 'row', gap: spacing.sm, alignItems: 'center'},
-  miniBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  heroPillRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.cardMuted,
+    gap: spacing.md,
+    marginTop: spacing.md,
   },
+  received: {
+    fontSize: fontSize.caption,
+    color: colors.textSubtle,
+  },
+
+  section: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sectionTitle: {
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: spacing.md,
+  },
+  sectionBody: {gap: spacing.md},
+
+  customerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  customerName: {
+    fontSize: fontSize.bodyLg,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+  },
+  customerSub: {
+    marginTop: 2,
+    fontSize: fontSize.small,
+    color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
+  },
+  actionRow: {flexDirection: 'row', gap: spacing.sm},
+
   issueText: {
     fontSize: fontSize.body,
     color: colors.text,
     lineHeight: 22,
-    marginBottom: spacing.sm,
   },
-  metaText: {
-    fontSize: fontSize.small,
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  timelineRow: {
+  metaRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    paddingBottom: spacing.md,
   },
-  timelineCol: {alignItems: 'center', width: 16},
+  metaLabel: {
+    width: 100,
+    fontSize: fontSize.small,
+    color: colors.textMuted,
+  },
+  metaValue: {
+    flex: 1,
+    fontSize: fontSize.small,
+    color: colors.text,
+  },
+
+  timelineEntry: {flexDirection: 'row', gap: spacing.md, paddingBottom: spacing.md},
+  timelineMarker: {alignItems: 'center', width: 12, marginTop: 4},
   timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.accent,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primaryMuted,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
-    ...shadows.card,
+    borderColor: colors.border,
+  },
+  timelineDotActive: {
+    backgroundColor: colors.text,
+    borderColor: colors.text,
   },
   timelineLine: {
+    width: 1,
     flex: 1,
-    width: 2,
     backgroundColor: colors.border,
     marginTop: 4,
   },
   timelineStatus: {
     fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
+    fontWeight: fontWeight.medium,
     color: colors.text,
   },
-  timelineTime: {fontSize: fontSize.caption, color: colors.textSubtle, marginTop: 2},
+  timelineTime: {
+    marginTop: 2,
+    fontSize: fontSize.caption,
+    color: colors.textSubtle,
+  },
   timelineNote: {
+    marginTop: 2,
     fontSize: fontSize.small,
     color: colors.textMuted,
-    marginTop: 4,
-    fontStyle: 'italic',
   },
-  emptyText: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-    fontStyle: 'italic',
-  },
-  partRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.md},
-  partName: {
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  partMeta: {fontSize: fontSize.small, color: colors.textMuted, marginTop: 2},
-  partTotal: {
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-    fontVariant: ['tabular-nums'],
-  },
-  divider: {height: 1, backgroundColor: colors.divider, marginVertical: spacing.xs},
-  partsTotal: {
-    flex: 1,
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
-    color: colors.textMuted,
-  },
-  partsTotalAmt: {
-    fontSize: fontSize.subhead,
-    fontWeight: fontWeight.bold,
-    color: colors.primary,
-    fontVariant: ['tabular-nums'],
-  },
-  invoiceBadge: {
+
+  partRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.successSoft,
-    padding: spacing.sm,
-    borderRadius: radii.md,
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
   },
+  partName: {
+    fontSize: fontSize.body,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+  },
+  partMeta: {
+    marginTop: 2,
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
+  },
+  partTotal: {
+    fontSize: fontSize.body,
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    fontWeight: fontWeight.medium,
+  },
+  removeBtn: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partSubtotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  partSubtotalLabel: {
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+  },
+  partSubtotalValue: {
+    fontSize: fontSize.body,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+    fontVariant: ['tabular-nums'],
+  },
+  addPartBtn: {alignSelf: 'flex-start', marginTop: spacing.sm, paddingHorizontal: 0},
+  emptyText: {fontSize: fontSize.body, color: colors.textMuted},
+
   payRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  payBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radii.pill,
-  },
-  payDot: {width: 6, height: 6, borderRadius: 3},
-  payBadgeText: {
+  payStatus: {
     fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    letterSpacing: 0.3,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   payLine: {
     fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
     color: colors.text,
     fontVariant: ['tabular-nums'],
   },
   payDue: {
-    fontSize: fontSize.caption,
-    color: colors.danger,
     marginTop: 2,
-    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.small,
+    color: colors.danger,
+    fontVariant: ['tabular-nums'],
   },
-  payList: {
-    gap: spacing.xs,
-    paddingTop: spacing.xs,
-  },
+  payBtn: {alignSelf: 'flex-start', paddingHorizontal: 0},
+  payList: {marginTop: spacing.sm, gap: spacing.xs},
   payItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: 4,
+    paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
+    borderTopColor: colors.border,
   },
   payMode: {
     fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
     color: colors.textMuted,
-    width: 48,
-    letterSpacing: 0.4,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
+    width: 56,
   },
   payAmt: {
     flex: 1,
     fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
     color: colors.text,
     fontVariant: ['tabular-nums'],
   },
-  payTime: {
-    fontSize: fontSize.caption,
-    color: colors.textSubtle,
-  },
-  warrantyTitle: {
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
-    color: colors.success,
-  },
-  warrantySub: {
-    fontSize: fontSize.small,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  warrantyHint: {
-    fontSize: fontSize.small,
-    color: colors.textMuted,
+  payTime: {fontSize: fontSize.caption, color: colors.textSubtle},
+
+  invoiceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   invoiceLabel: {
     fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
-    color: '#166534',
+    color: colors.success,
+    fontWeight: fontWeight.medium,
   },
+
+  warrantyHint: {
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+  },
+  warrantyTitle: {
+    fontSize: fontSize.subhead,
+    color: colors.text,
+    fontWeight: fontWeight.semibold,
+  },
+  warrantySub: {
+    marginTop: 4,
+    fontSize: fontSize.small,
+    color: colors.textMuted,
+  },
+
   footer: {
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.sm,
     padding: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.card,
   },
   footerBtn: {flex: 1},
-  searchBox: {paddingHorizontal: spacing.lg, marginBottom: spacing.md},
-  modalList: {paddingHorizontal: spacing.lg, gap: spacing.sm},
+
+  searchBox: {paddingHorizontal: spacing.xl, marginBottom: spacing.sm},
+  modalList: {paddingHorizontal: spacing.xl, paddingBottom: spacing.huge},
   partOption: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  partOptionDisabled: {opacity: 0.5},
-  partOptionRight: {alignItems: 'flex-end'},
-  stockTag: {
-    fontSize: fontSize.caption,
-    color: colors.textMuted,
+  partOptionDisabled: {opacity: 0.4},
+  partOptionName: {
+    fontSize: fontSize.body,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+  },
+  partOptionMeta: {
     marginTop: 2,
-    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.small,
+    color: colors.textMuted,
   },
+  partOptionRight: {alignItems: 'flex-end'},
+  partOptionPrice: {
+    fontSize: fontSize.body,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+    fontVariant: ['tabular-nums'],
+  },
+  stockTag: {
+    marginTop: 2,
+    fontSize: fontSize.caption,
+    color: colors.textSubtle,
+    fontVariant: ['tabular-nums'],
+  },
+
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(10,10,10,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
+    backgroundColor: colors.bg,
     padding: spacing.xl,
+    borderTopLeftRadius: radii.xxl,
+    borderTopRightRadius: radii.xxl,
+    gap: spacing.md,
   },
   modalTitle: {
-    fontSize: fontSize.title,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.subhead,
+    fontWeight: fontWeight.semibold,
     color: colors.text,
-    marginBottom: spacing.lg,
   },
+  modeRow: {flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs},
   modeChip: {
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: radii.md,
-    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
   },
-  modeChipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
+  modeChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
   modeLabel: {
     fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
     color: colors.textMuted,
+    fontWeight: fontWeight.medium,
     letterSpacing: 0.5,
   },
   modeLabelActive: {color: colors.textOnPrimary},
+  modalFooter: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10,10,10,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   successCard: {
     backgroundColor: colors.card,
-    paddingVertical: spacing.xxxl,
-    paddingHorizontal: spacing.huge,
-    borderRadius: radii.xl,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.xl,
+    borderRadius: radii.xxl,
     alignItems: 'center',
-    ...shadows.raised,
+    gap: spacing.md,
   },
   successIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
   },
   successText: {
     fontSize: fontSize.subhead,
-    fontWeight: fontWeight.bold,
     color: colors.text,
+    fontWeight: fontWeight.semibold,
   },
 });
-
-// avoid lint warning for unused warn helper
-void hapticWarn;
-void CalendarIcon;
