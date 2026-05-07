@@ -119,7 +119,7 @@ export const JobCreateScreen: React.FC = () => {
                   label="Customer name"
                   value={name}
                   onChangeText={setName}
-                  placeholder="As they prefer to be addressed"
+                  placeholder="Full name"
                 />
               </View>
             </Card>
@@ -291,12 +291,12 @@ const styles = StyleSheet.create({
   gap: {gap: spacing.md},
   row2: {flexDirection: 'row', gap: spacing.md},
   sectionTitle: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.medium,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     marginBottom: spacing.sm,
   },
   prefix: {color: colors.textMuted, fontWeight: fontWeight.semibold},

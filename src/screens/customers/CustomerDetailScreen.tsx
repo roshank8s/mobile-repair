@@ -6,16 +6,14 @@ import {
   type RouteProp,
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import Animated, {FadeIn} from 'react-native-reanimated';
 import {Screen} from '../../components/Screen';
 import {ScreenHeader} from '../../components/ScreenHeader';
-import {Card} from '../../components/Card';
 import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {StatusPill} from '../../components/StatusPill';
-import {MoneyText} from '../../components/MoneyText';
 import {PhotoPicker} from '../../components/PhotoPicker';
-import {PhoneIcon, WhatsAppIcon} from '../../components/icons';
-import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
+import {Button} from '../../components/Button';
+import {colors, fontSize, fontWeight, spacing} from '../../theme/tokens';
 import {upsertCustomer, useStoreState} from '../../data/store';
 import {formatINR} from '../../lib/currency';
 import {formatRelative} from '../../lib/date';
@@ -50,206 +48,222 @@ export const CustomerDetailScreen: React.FC = () => {
 
   return (
     <Screen>
-      <ScreenHeader title={customer.name} onBack={() => nav.goBack()} />
-
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.duration(260)}>
-          <Card>
-            <View style={styles.headerRow}>
-              <PhotoPicker
-                uri={customer.avatarUri}
-                fallback={customer.name.split(' ').map(p => p[0] ?? '').join('')}
-                size={72}
-                onChange={u =>
-                  upsertCustomer({
-                    id: customer.id,
-                    name: customer.name,
-                    phone: customer.phone,
-                    email: customer.email,
-                    address: customer.address,
-                    avatarUri: u ?? undefined,
-                  })
-                }
-              />
-              <View style={styles.flex}>
-                <Text style={styles.headerName}>{customer.name}</Text>
-                <Text style={styles.headerSub}>+91 {customer.phone}</Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
-            <Text style={styles.label}>Phone</Text>
-            <Text style={styles.value}>+91 {customer.phone}</Text>
-            {customer.email ? (
-              <>
-                <Text style={[styles.label, {marginTop: spacing.md}]}>
-                  Email
-                </Text>
-                <Text style={styles.value}>{customer.email}</Text>
-              </>
-            ) : null}
-            {customer.address ? (
-              <>
-                <Text style={[styles.label, {marginTop: spacing.md}]}>
-                  Address
-                </Text>
-                <Text style={styles.value}>{customer.address}</Text>
-              </>
-            ) : null}
+      <ScreenHeader title="" onBack={() => nav.goBack()} />
+      <Animated.View entering={FadeIn.duration(220)} style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.heroBlock}>
+            <PhotoPicker
+              uri={customer.avatarUri}
+              fallback={customer.name
+                .split(' ')
+                .map(p => p[0] ?? '')
+                .join('')}
+              size={72}
+              onChange={u =>
+                upsertCustomer({
+                  id: customer.id,
+                  name: customer.name,
+                  phone: customer.phone,
+                  email: customer.email,
+                  address: customer.address,
+                  avatarUri: u ?? undefined,
+                })
+              }
+            />
+            <Text style={styles.name}>{customer.name}</Text>
+            <Text style={styles.phone}>+91 {customer.phone}</Text>
             <View style={styles.actionRow}>
-              <AnimatedPressable
+              <Button
+                label="Call"
+                variant="secondary"
+                size="sm"
                 onPress={() => callPhone(customer.phone)}
-                style={[styles.action, {backgroundColor: colors.primaryMuted}]}
-                scaleTo={0.95}>
-                <PhoneIcon size={18} color={colors.primary} />
-                <Text style={[styles.actionLabel, {color: colors.primary}]}>
-                  Call
-                </Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                onPress={() =>
-                  openWhatsApp(
-                    customer.phone,
-                    `Hi ${customer.name}!`,
-                  )
-                }
-                style={[styles.action, {backgroundColor: colors.successSoft}]}
-                scaleTo={0.95}>
-                <WhatsAppIcon size={18} color={colors.success} />
-                <Text style={[styles.actionLabel, {color: colors.success}]}>
-                  WhatsApp
-                </Text>
-              </AnimatedPressable>
+              />
+              <Button
+                label="WhatsApp"
+                variant="secondary"
+                size="sm"
+                onPress={() => openWhatsApp(customer.phone, `Hi ${customer.name}!`)}
+              />
             </View>
-          </Card>
-        </Animated.View>
+          </View>
 
-        <Animated.View entering={FadeInDown.duration(260).delay(80)}>
-          <Card style={{marginTop: spacing.md}}>
-            <Text style={styles.label}>Lifetime spend</Text>
-            <MoneyText value={totalSpend} size="lg" />
-            <Text style={styles.muted}>
-              Across {jobs.length} job{jobs.length === 1 ? '' : 's'}
-            </Text>
-          </Card>
-        </Animated.View>
+          <View style={styles.statsRow}>
+            <Stat label="Lifetime spend" value={formatINR(totalSpend)} />
+            <View style={styles.divider} />
+            <Stat
+              label="Jobs"
+              value={String(jobs.length)}
+            />
+          </View>
 
-        <Text style={styles.section}>Job history</Text>
-        {jobs.length === 0 ? (
-          <Card>
-            <Text style={styles.muted}>No jobs yet for this customer.</Text>
-          </Card>
-        ) : (
-          <View style={styles.list}>
-            {jobs.map((j, i) => (
-              <Animated.View
-                key={j.id}
-                entering={FadeInDown.duration(240).delay(i * 40)}>
+          {customer.email || customer.address ? (
+            <View style={styles.infoBlock}>
+              {customer.email ? (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Email</Text>
+                  <Text style={styles.infoValue}>{customer.email}</Text>
+                </View>
+              ) : null}
+              {customer.address ? (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Address</Text>
+                  <Text style={styles.infoValue}>{customer.address}</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          <Text style={styles.sectionTitle}>Job history</Text>
+          {jobs.length === 0 ? (
+            <Text style={styles.empty}>No jobs yet.</Text>
+          ) : (
+            <View style={styles.list}>
+              {jobs.map(j => (
                 <AnimatedPressable
+                  key={j.id}
                   onPress={() => nav.navigate('JobDetail', {jobId: j.id})}
                   style={styles.jobRow}
                   scaleTo={0.99}>
                   <View style={styles.flex}>
-                    <Text style={styles.jobTicket}>{j.ticketNo}</Text>
                     <Text style={styles.jobDevice}>
                       {j.device.brand} {j.device.model}
                     </Text>
-                    <Text style={styles.jobTime}>
-                      {formatRelative(j.receivedAt)} ·{' '}
+                    <Text style={styles.jobMeta}>
+                      {j.ticketNo} · {formatRelative(j.receivedAt)} ·{' '}
                       {formatINR(j.finalAmount ?? j.estimateAmount)}
                     </Text>
                   </View>
                   <StatusPill status={j.status} size="sm" />
                 </AnimatedPressable>
-              </Animated.View>
-            ))}
-          </View>
-        )}
-        <View style={{height: spacing.huge}} />
-      </ScrollView>
+              ))}
+            </View>
+          )}
+
+          <View style={{height: spacing.huge}} />
+        </ScrollView>
+      </Animated.View>
     </Screen>
   );
 };
 
+const Stat: React.FC<{label: string; value: string}> = ({label, value}) => (
+  <View style={styles.statCell}>
+    <Text style={styles.statLabel}>{label}</Text>
+    <Text style={styles.statValue}>{value}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   flex: {flex: 1},
-  scroll: {paddingHorizontal: spacing.lg, paddingBottom: spacing.huge},
-  headerRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.lg},
-  headerName: {
-    fontSize: fontSize.title,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
+  scroll: {paddingBottom: spacing.huge},
+
+  heroBlock: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
-  headerSub: {
+  name: {
+    marginTop: spacing.md,
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    letterSpacing: -0.4,
+  },
+  phone: {
+    marginTop: 4,
     fontSize: fontSize.body,
     color: colors.textMuted,
-    marginTop: 2,
     fontVariant: ['tabular-nums'],
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.divider,
-    marginVertical: spacing.lg,
-  },
-  label: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: colors.textSubtle,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  value: {
-    fontSize: fontSize.body,
-    color: colors.text,
-    marginTop: 2,
-    fontWeight: fontWeight.semibold,
-  },
-  actionRow: {flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg},
-  action: {
-    flex: 1,
+  actionRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-  },
-  actionLabel: {
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
-  },
-  muted: {
-    fontSize: fontSize.small,
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  section: {
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
     marginTop: spacing.lg,
-    marginBottom: spacing.sm,
   },
-  list: {gap: spacing.sm},
+
+  statsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  divider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.lg,
+  },
+  statCell: {flex: 1, gap: 4},
+  statLabel: {
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontSize: fontSize.subhead,
+    color: colors.text,
+    fontWeight: fontWeight.medium,
+    fontVariant: ['tabular-nums'],
+  },
+
+  infoBlock: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.md,
+  },
+  infoRow: {gap: 4},
+  infoLabel: {
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  infoValue: {
+    fontSize: fontSize.body,
+    color: colors.text,
+  },
+
+  sectionTitle: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.md,
+    fontSize: fontSize.subhead,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  empty: {
+    paddingHorizontal: spacing.xl,
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+  },
+  list: {paddingHorizontal: spacing.xl},
   jobRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  jobTicket: {
+  jobDevice: {
     fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
     color: colors.text,
+    fontWeight: fontWeight.medium,
+  },
+  jobMeta: {
+    marginTop: 2,
+    fontSize: fontSize.small,
+    color: colors.textMuted,
     fontVariant: ['tabular-nums'],
   },
-  jobDevice: {fontSize: fontSize.small, color: colors.textMuted, marginTop: 2},
-  jobTime: {fontSize: fontSize.caption, color: colors.textSubtle, marginTop: 4},
 });
