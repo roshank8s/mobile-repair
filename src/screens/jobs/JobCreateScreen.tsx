@@ -41,6 +41,7 @@ export const JobCreateScreen: React.FC = () => {
   const [accessories, setAccessories] = useState('');
   const [issue, setIssue] = useState('');
   const [estimate, setEstimate] = useState('');
+  const [warrantyDays, setWarrantyDays] = useState('30');
   const [techId, setTechId] = useState<string | undefined>();
   const [photos, setPhotos] = useState<string[]>([]);
 
@@ -80,6 +81,7 @@ export const JobCreateScreen: React.FC = () => {
       estimateAmount: Number(estimate) || 0,
       technicianId: techId,
       photos,
+      warrantyDays: Number(warrantyDays) || 0,
     });
     hapticSuccess();
     toast.show(`Ticket ${job.ticketNo} created`);
@@ -197,14 +199,26 @@ export const JobCreateScreen: React.FC = () => {
                   numberOfLines={3}
                   placeholder="e.g. Screen cracked, touch unresponsive..."
                 />
-                <Input
-                  label="Estimate (₹)"
-                  value={estimate}
-                  onChangeText={setEstimate}
-                  keyboardType="numeric"
-                  leftAdornment={<Text style={styles.prefix}>₹</Text>}
-                  hint="Leave 0 if quoting after diagnosis."
-                />
+                <View style={styles.row2}>
+                  <Input
+                    label="Estimate (₹)"
+                    value={estimate}
+                    onChangeText={setEstimate}
+                    keyboardType="numeric"
+                    leftAdornment={<Text style={styles.prefix}>₹</Text>}
+                    hint="0 if quoting after diagnosis."
+                    containerStyle={styles.flex}
+                  />
+                  <Input
+                    label="Warranty (days)"
+                    value={warrantyDays}
+                    onChangeText={setWarrantyDays}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                    hint="Default 30 days."
+                    containerStyle={styles.flex}
+                  />
+                </View>
               </View>
             </Card>
 

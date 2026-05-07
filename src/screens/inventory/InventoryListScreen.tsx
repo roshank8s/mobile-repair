@@ -10,7 +10,8 @@ import {AnimatedPressable} from '../../components/AnimatedPressable';
 import {EmptyState} from '../../components/EmptyState';
 import {Fab} from '../../components/Fab';
 import {FilterChips, type FilterChip} from '../../components/FilterChips';
-import {PackageIcon, SearchIcon} from '../../components/icons';
+import {PartIllustration} from '../../components/PartIllustration';
+import {SearchIcon} from '../../components/icons';
 import {colors, fontSize, fontWeight, radii, spacing} from '../../theme/tokens';
 import {useStoreState} from '../../data/store';
 import {formatINR} from '../../lib/currency';
@@ -168,13 +169,17 @@ const PartRow: React.FC<{part: Part; onPress: () => void; delay: number}> = ({
     <Animated.View
       entering={FadeInDown.duration(260).delay(delay).springify().damping(18)}>
       <AnimatedPressable onPress={onPress} style={styles.row} scaleTo={0.99}>
-        <View style={styles.thumb}>
-          {part.imageUri ? (
+        {part.imageUri ? (
+          <View style={styles.thumb}>
             <Image source={{uri: part.imageUri}} style={styles.thumbImg} />
-          ) : (
-            <PackageIcon size={26} color={colors.textSubtle} strokeWidth={1.6} />
-          )}
-        </View>
+          </View>
+        ) : (
+          <PartIllustration
+            name={part.name}
+            compatModels={part.compatModels}
+            size={64}
+          />
+        )}
         <View style={styles.flex}>
           <Text style={styles.name} numberOfLines={1}>
             {part.name}
@@ -223,8 +228,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   thumb: {
-    width: 60,
-    height: 60,
+    width: 64,
+    height: 64,
     borderRadius: radii.md,
     backgroundColor: colors.cardMuted,
     alignItems: 'center',

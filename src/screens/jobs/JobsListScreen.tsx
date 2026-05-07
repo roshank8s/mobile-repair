@@ -129,7 +129,7 @@ export const JobsListScreen: React.FC = () => {
                 job={j}
                 customerName={cust?.name ?? 'Walk-in'}
                 customerAvatar={cust?.avatarUri}
-                photoThumb={j.photos[0]}
+                photoThumb={j.photos?.[0]}
                 onPress={() => nav.navigate('JobDetail', {jobId: j.id})}
                 delay={i * 40}
               />

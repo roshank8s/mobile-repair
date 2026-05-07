@@ -74,6 +74,9 @@ export const JobDetailScreen: React.FC = () => {
       : undefined,
   );
   const invoice = useStoreState(s => s.invoices.find(i => i.jobId === jobId));
+  const jobPayments = useStoreState(s =>
+    s.payments.filter(p => p.jobId === jobId),
+  );
   const shop = useStoreState(s => s.shop);
   const toast = useToast();
   const [partModalOpen, setPartModalOpen] = useState(false);
@@ -81,14 +84,19 @@ export const JobDetailScreen: React.FC = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const totals = useMemo(() => {
-    if (!job) return {total: 0, partsTotal: 0};
+    if (!job) return {total: 0, partsTotal: 0, paid: 0, due: 0, status: 'pending' as const};
     const partsTotal = job.parts.reduce(
       (s, p) => s + p.unitPrice * p.qty,
       0,
     );
     const total = job.finalAmount ?? job.estimateAmount ?? partsTotal;
-    return {total, partsTotal};
-  }, [job]);
+    const paid = jobPayments.reduce((s, p) => s + p.amount, 0);
+    const due = Math.max(0, total - paid);
+    let status: 'paid' | 'partial' | 'pending' = 'pending';
+    if (total > 0 && paid >= total) status = 'paid';
+    else if (paid > 0) status = 'partial';
+    return {total, partsTotal, paid, due, status};
+  }, [job, jobPayments]);
 
   if (!job) {
     return (
@@ -147,9 +155,9 @@ export const JobDetailScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>
-        {job.photos.length > 0 ? (
+        {(job.photos ?? []).length > 0 ? (
           <PhotoHero
-            photos={job.photos}
+            photos={job.photos ?? []}
             status={job.status}
             ticketNo={job.ticketNo}
           />
@@ -311,6 +319,42 @@ export const JobDetailScreen: React.FC = () => {
               keyboardType="numeric"
               hint={`Estimate was ${formatINR(job.estimateAmount)}`}
             />
+
+            <View style={styles.payRow}>
+              <PaymentBadge status={totals.status} />
+              <View style={styles.flex}>
+                <Text style={styles.payLine}>
+                  Paid {formatINR(totals.paid)} of {formatINR(totals.total)}
+                </Text>
+                {totals.due > 0 ? (
+                  <Text style={styles.payDue}>
+                    Due {formatINR(totals.due)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+
+            <Button
+              label={totals.due > 0 ? 'Record payment' : 'Add another payment'}
+              variant="outline"
+              size="sm"
+              onPress={() => setPaymentModalOpen(true)}
+            />
+
+            {jobPayments.length > 0 ? (
+              <View style={styles.payList}>
+                {jobPayments.map(p => (
+                  <View key={p.id} style={styles.payItem}>
+                    <Text style={styles.payMode}>{p.mode.toUpperCase()}</Text>
+                    <Text style={styles.payAmt}>{formatINR(p.amount)}</Text>
+                    <Text style={styles.payTime}>
+                      {formatRelative(p.at)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
             {invoice ? (
               <View style={styles.invoiceBadge}>
                 <CheckIcon size={16} color={colors.success} />
@@ -321,6 +365,19 @@ export const JobDetailScreen: React.FC = () => {
             ) : null}
           </View>
         </Card>
+
+        {/* Warranty */}
+        {(job.warrantyDays ?? 0) > 0 ? (
+          <>
+            <SectionTitle>Warranty</SectionTitle>
+            <Card>
+              <WarrantyBlock
+                warrantyDays={job.warrantyDays!}
+                deliveredAt={job.deliveredAt}
+              />
+            </Card>
+          </>
+        ) : null}
 
         <View style={{height: spacing.huge}} />
       </ScrollView>
@@ -423,6 +480,58 @@ const PhotoHero: React.FC<{
           </Text>
         </View>
       </View>
+    </View>
+  );
+};
+
+const PAYMENT_STATUS_META = {
+  paid: {label: 'Paid', bg: colors.successSoft, fg: '#166534', dot: colors.success},
+  partial: {label: 'Partial', bg: colors.warningSoft, fg: '#92400E', dot: colors.warning},
+  pending: {label: 'Pending', bg: colors.dangerSoft, fg: colors.danger, dot: colors.danger},
+} as const;
+
+const PaymentBadge: React.FC<{status: 'paid' | 'partial' | 'pending'}> = ({
+  status,
+}) => {
+  const m = PAYMENT_STATUS_META[status];
+  return (
+    <View style={[styles.payBadge, {backgroundColor: m.bg}]}>
+      <View style={[styles.payDot, {backgroundColor: m.dot}]} />
+      <Text style={[styles.payBadgeText, {color: m.fg}]}>{m.label}</Text>
+    </View>
+  );
+};
+
+const WarrantyBlock: React.FC<{warrantyDays: number; deliveredAt?: string}> = ({
+  warrantyDays,
+  deliveredAt,
+}) => {
+  if (!deliveredAt) {
+    return (
+      <Text style={styles.warrantyHint}>
+        Job will carry a {warrantyDays}-day warranty once delivered.
+      </Text>
+    );
+  }
+  const expiry = new Date(deliveredAt);
+  expiry.setDate(expiry.getDate() + warrantyDays);
+  const daysLeft = Math.ceil(
+    (expiry.getTime() - Date.now()) / (24 * 3600 * 1000),
+  );
+  const expired = daysLeft <= 0;
+  return (
+    <View>
+      <Text style={[styles.warrantyTitle, expired && {color: colors.danger}]}>
+        {expired ? 'Warranty expired' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} of warranty left`}
+      </Text>
+      <Text style={styles.warrantySub}>
+        {warrantyDays}-day cover · until{' '}
+        {expiry.toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })}
+      </Text>
     </View>
   );
 };
@@ -727,6 +836,81 @@ const styles = StyleSheet.create({
     backgroundColor: colors.successSoft,
     padding: spacing.sm,
     borderRadius: radii.md,
+  },
+  payRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  payBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radii.pill,
+  },
+  payDot: {width: 6, height: 6, borderRadius: 3},
+  payBadgeText: {
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 0.3,
+  },
+  payLine: {
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+  },
+  payDue: {
+    fontSize: fontSize.caption,
+    color: colors.danger,
+    marginTop: 2,
+    fontWeight: fontWeight.semibold,
+  },
+  payList: {
+    gap: spacing.xs,
+    paddingTop: spacing.xs,
+  },
+  payItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: 4,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+  },
+  payMode: {
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
+    color: colors.textMuted,
+    width: 48,
+    letterSpacing: 0.4,
+  },
+  payAmt: {
+    flex: 1,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+  },
+  payTime: {
+    fontSize: fontSize.caption,
+    color: colors.textSubtle,
+  },
+  warrantyTitle: {
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.bold,
+    color: colors.success,
+  },
+  warrantySub: {
+    fontSize: fontSize.small,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  warrantyHint: {
+    fontSize: fontSize.small,
+    color: colors.textMuted,
   },
   invoiceLabel: {
     fontSize: fontSize.small,

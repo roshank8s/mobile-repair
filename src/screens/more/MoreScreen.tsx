@@ -12,6 +12,7 @@ import {MoneyText} from '../../components/MoneyText';
 import {
   BarChartIcon,
   ChevronRightIcon,
+  CoinsIcon,
   HelpIcon,
   LogOutIcon,
   PercentIcon,
@@ -157,12 +158,28 @@ export const MoreScreen: React.FC = () => {
             label="View Reports"
             color={colors.accent}
             bg={colors.accentSoft}
-            onPress={() => goToTab('Dashboard')}
+            onPress={() => nav.navigate('Reports')}
           />
         </Animated.View>
 
         {/* Sections */}
         <Section title="Business" delay={120}>
+          <Row
+            icon={BarChartIcon}
+            iconBg={colors.accentSoft}
+            iconColor={colors.accent}
+            title="Reports & insights"
+            sub="Earnings, profit, top repairs"
+            onPress={() => nav.navigate('Reports')}
+          />
+          <Row
+            icon={CoinsIcon}
+            iconBg={colors.dangerSoft}
+            iconColor={colors.danger}
+            title="Expenses"
+            sub="Rent, parts, utilities, staff"
+            onPress={() => nav.navigate('ExpensesList')}
+          />
           <Row
             icon={ReceiptIcon}
             iconBg={colors.primaryMuted}

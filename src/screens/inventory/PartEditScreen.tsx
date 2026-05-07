@@ -43,6 +43,7 @@ export const PartEditScreen: React.FC = () => {
   const [compatModels, setCompatModels] = useState(
     existing?.compatModels ?? '',
   );
+  const [supplier, setSupplier] = useState(existing?.supplier ?? '');
   const [costPrice, setCostPrice] = useState(
     existing ? String(existing.costPrice) : '',
   );
@@ -66,6 +67,7 @@ export const PartEditScreen: React.FC = () => {
       name: name.trim(),
       brand: brand.trim() || undefined,
       compatModels: compatModels.trim() || undefined,
+      supplier: supplier.trim() || undefined,
       costPrice: Number(costPrice) || 0,
       sellPrice: Number(sellPrice),
       stock: Number(stock) || 0,
@@ -158,6 +160,12 @@ export const PartEditScreen: React.FC = () => {
                   leftAdornment={<Text style={styles.prefix}>₹</Text>}
                 />
               </View>
+              <Input
+                label="Supplier (optional)"
+                value={supplier}
+                onChangeText={setSupplier}
+                placeholder="Vendor name / shop"
+              />
               <View style={styles.row}>
                 <Input
                   label="Current stock"

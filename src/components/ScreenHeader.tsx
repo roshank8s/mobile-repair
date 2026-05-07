@@ -21,7 +21,7 @@ export const ScreenHeader: React.FC<Props> = ({
     <View style={styles.wrap}>
       {onBack ? (
         <AnimatedPressable onPress={onBack} style={styles.back}>
-          <ChevronLeftIcon size={22} color={colors.text} />
+          <ChevronLeftIcon size={22} color={colors.textOnBg} />
         </AnimatedPressable>
       ) : (
         <View style={styles.spacer} />
@@ -56,18 +56,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,
-    backgroundColor: colors.cardMuted,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: colors.borderOnBg,
   },
   spacer: {width: 36, height: 36},
   titles: {flex: 1},
   title: {
     fontSize: fontSize.title,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textOnBg,
   },
   subtitle: {
     fontSize: fontSize.small,
-    color: colors.textMuted,
+    color: colors.textOnBgMuted,
     marginTop: 2,
   },
   right: {minWidth: 36, alignItems: 'flex-end'},

@@ -18,4 +18,7 @@ export type RootStackParamList = {
   InvoicesList: undefined;
   InvoiceDetail: {invoiceId: string};
   Settings: undefined;
+  Reports: undefined;
+  ExpensesList: undefined;
+  ExpenseEdit: undefined;
 };

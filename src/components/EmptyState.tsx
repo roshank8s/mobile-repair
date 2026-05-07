@@ -115,13 +115,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.subhead,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.textOnBg,
     textAlign: 'center',
   },
   message: {
     marginTop: spacing.xs,
     fontSize: fontSize.small,
-    color: colors.textMuted,
+    color: colors.textOnBgMuted,
     textAlign: 'center',
     maxWidth: 260,
   },

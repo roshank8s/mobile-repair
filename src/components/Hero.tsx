@@ -20,7 +20,7 @@ type Props = {
  */
 export const Hero: React.FC<Props> = ({
   children,
-  colors: cs = [colors.primary, '#312E81'],
+  colors: cs = ['#4338CA', '#1E1B4B'],
   style,
   decorate = true,
 }) => {

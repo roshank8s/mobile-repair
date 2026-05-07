@@ -15,7 +15,7 @@ const App: React.FC = () => {
       <SafeAreaProvider>
         <ThemeProvider>
           <ToastProvider>
-            <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+            <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
             <AppBoot />
           </ToastProvider>
         </ThemeProvider>
@@ -35,8 +35,9 @@ const AppBoot: React.FC = () => {
 
   useEffect(() => {
     if (ready) {
-      // small grace delay so the splash always shows for a beat (avoids flicker on warm starts)
-      const t = setTimeout(() => setSplashVisible(false), 350);
+      // hold the splash for ~1.6s so the brand card is on screen long enough
+      // to register, then start the fade
+      const t = setTimeout(() => setSplashVisible(false), 1600);
       return () => clearTimeout(t);
     }
   }, [ready]);

@@ -3,6 +3,7 @@ import {useEffect, useState, useSyncExternalStore} from 'react';
 import type {
   AppState,
   Customer,
+  Expense,
   Invoice,
   Job,
   JobStatus,
@@ -43,6 +44,7 @@ const initialState: AppState = {
   parts: [],
   payments: [],
   invoices: [],
+  expenses: [],
   ticketCounter: 1000,
   invoiceCounter: 100,
 };
@@ -85,7 +87,7 @@ export const hydrate = async (): Promise<void> => {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as AppState;
-      state = {...initialState, ...parsed};
+      state = migrate({...initialState, ...parsed});
     } else {
       // First launch: pre-seed inventory + sample customers so the UI is alive.
       const seeded = seedData();
@@ -100,6 +102,26 @@ export const hydrate = async (): Promise<void> => {
   hydrated = true;
   notify();
 };
+
+/**
+ * Backfill fields that didn't exist in earlier app versions, so users
+ * upgrading from a previous build don't crash on `job.photos.length` etc.
+ */
+const migrate = (s: AppState): AppState => ({
+  ...s,
+  jobs: (s.jobs ?? []).map(j => ({
+    ...j,
+    photos: Array.isArray(j.photos) ? j.photos : [],
+    parts: Array.isArray(j.parts) ? j.parts : [],
+    statusLog: Array.isArray(j.statusLog) ? j.statusLog : [],
+  })),
+  customers: s.customers ?? [],
+  parts: s.parts ?? [],
+  technicians: s.technicians ?? [],
+  payments: s.payments ?? [],
+  invoices: s.invoices ?? [],
+  expenses: s.expenses ?? [],
+});
 
 export const resetAll = async () => {
   await AsyncStorage.removeItem(STORAGE_KEY);
@@ -262,6 +284,7 @@ export type CreateJobInput = {
   promisedAt?: string;
   technicianId?: string;
   photos?: string[];
+  warrantyDays?: number;
 };
 
 export const createJob = (input: CreateJobInput): Job => {
@@ -284,6 +307,7 @@ export const createJob = (input: CreateJobInput): Job => {
       parts: [],
       statusLog: [{status: 'received', at: now}],
       photos: input.photos ?? [],
+      warrantyDays: input.warrantyDays,
       createdAt: now,
       updatedAt: now,
     };
@@ -461,6 +485,29 @@ export const createInvoice = (
   void peekInvoiceCounter;
   return inv;
 };
+
+// ----- Expenses -----
+export const addExpense = (
+  input: Omit<Expense, 'id' | 'at'> & {at?: string},
+): Expense => {
+  let exp!: Expense;
+  setState(s => {
+    exp = {
+      id: newId('exp'),
+      at: input.at ?? new Date().toISOString(),
+      label: input.label,
+      amount: input.amount,
+      category: input.category,
+      mode: input.mode,
+      note: input.note,
+    };
+    return {...s, expenses: [exp, ...s.expenses]};
+  });
+  return exp;
+};
+
+export const deleteExpense = (id: string) =>
+  setState(s => ({...s, expenses: s.expenses.filter(e => e.id !== id)}));
 
 // ----- Selectors -----
 export const selectCustomerById = (id?: string) =>

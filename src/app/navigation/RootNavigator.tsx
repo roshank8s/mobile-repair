@@ -11,6 +11,9 @@ import {PartEditScreen} from '../../screens/inventory/PartEditScreen';
 import {InvoicesListScreen} from '../../screens/invoices/InvoicesListScreen';
 import {InvoiceDetailScreen} from '../../screens/invoices/InvoiceDetailScreen';
 import {SettingsScreen} from '../../screens/settings/SettingsScreen';
+import {ReportsScreen} from '../../screens/reports/ReportsScreen';
+import {ExpensesListScreen} from '../../screens/expenses/ExpensesListScreen';
+import {ExpenseEditScreen} from '../../screens/expenses/ExpenseEditScreen';
 import {useStoreState} from '../../data/store';
 import {colors} from '../../theme/tokens';
 
@@ -71,6 +74,13 @@ export const RootNavigator: React.FC = () => {
               component={InvoiceDetailScreen}
             />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="Reports" component={ReportsScreen} />
+            <Stack.Screen name="ExpensesList" component={ExpensesListScreen} />
+            <Stack.Screen
+              name="ExpenseEdit"
+              component={ExpenseEditScreen}
+              options={{animation: 'slide_from_bottom', presentation: 'modal'}}
+            />
           </>
         )}
       </Stack.Navigator>

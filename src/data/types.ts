@@ -102,6 +102,8 @@ export type Job = {
   statusLog: StatusLogEntry[];
   /** Photos of the device condition at intake (and any during repair). */
   photos: string[];
+  /** How many days warranty the shop offers on this repair. 0 = no warranty. */
+  warrantyDays?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -116,7 +118,36 @@ export type Part = {
   stock: number;
   lowStockAt: number;
   imageUri?: string;
+  /** Free-text supplier / vendor name. Helpful when reordering. */
+  supplier?: string;
   createdAt: string;
+};
+
+export type ExpenseCategory =
+  | 'rent'
+  | 'staff'
+  | 'parts'
+  | 'utility'
+  | 'travel'
+  | 'other';
+
+export const EXPENSE_CATEGORY_LABEL: Record<ExpenseCategory, string> = {
+  rent: 'Rent',
+  staff: 'Staff',
+  parts: 'Parts purchase',
+  utility: 'Utilities',
+  travel: 'Travel',
+  other: 'Other',
+};
+
+export type Expense = {
+  id: string;
+  label: string;
+  amount: number;
+  category: ExpenseCategory;
+  mode: PaymentMode;
+  note?: string;
+  at: string;
 };
 
 export type Payment = {
@@ -150,6 +181,7 @@ export type AppState = {
   parts: Part[];
   payments: Payment[];
   invoices: Invoice[];
+  expenses: Expense[];
   ticketCounter: number;
   invoiceCounter: number;
 };
